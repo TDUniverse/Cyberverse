@@ -1,33 +1,34 @@
 #include <RED4ext/RED4ext.hpp>
 
-RED4EXT_C_EXPORT bool RED4EXT_CALL Load(RED4ext::PluginHandle aHandle, const RED4ext::IRED4ext* aInterface)
+RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::EMainReason aReason,
+                                        const RED4ext::Sdk* aSdk)
 {
-    /*
-     * Here you can register your custom functions, initalize variable, create hooks and so on. All hooks created here
-     * will be attached automatically later, you do not need to attach them manually.
-     *
-     * Be sure to store the plugin handle and the interface because you cannot get it again later. The plugin handle is
-     * what identify your plugin through the extender.
-     *
-     * Returning "true" in this function loads the plugin, returning "false" will unload it and "Unload" will be called.
-     */
+    switch (aReason)
+    {
+    case RED4ext::EMainReason::Load:
+    {
+        /*
+         * Here you can register your custom functions, initalize variable, create hooks and so on.
+         *
+         * Be sure to store the plugin handle and the interface because you cannot get it again later. The plugin handle
+         * is what identify your plugin through the extender.
+         *
+         * Returning "true" in this function loads the plugin, returning "false" will unload it and "Main" will be
+         * called with "Unload" reason.
+         */
+
+        break;
+    }
+    case RED4ext::EMainReason::Unload:
+    {
+        /*
+         * Here you can free resources you allocated during initalization or during the time your plugin was executed.
+         */
+        break;
+    }
+    }
+
     return true;
-}
-
-RED4EXT_C_EXPORT void RED4EXT_CALL PostLoad()
-{
-    /*
-     * This function is called after all plugins are loaded. Use this to get interfaces to plugins you depends on.
-     */
-}
-
-RED4EXT_C_EXPORT void RED4EXT_CALL Unload()
-{
-    /*
-     * Here you can free resources you allocated during initalization or during the time your plugin was executed.
-     *
-     * Tis function is called when the game is closed or when "Load" returns false.
-     */
 }
 
 RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::PluginInfo* aInfo)
@@ -35,7 +36,7 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::PluginInfo* aInfo)
     /*
      * This function supply the necessary information about your plugin, like name, version, support runtime and SDK. DO
      * NOT do anything here yet!
-     * 
+     *
      * You MUST have this function!
      *
      * Make sure to fill all of the fields here in order to load your plugin correctly.
