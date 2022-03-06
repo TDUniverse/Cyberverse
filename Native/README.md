@@ -10,7 +10,7 @@ An example of a RED4ext plugin using CMake.
 
 ### Steps
 
-1. Download and install **[Visual Studio 2019 Community Edition](https://www.visualstudio.com/)** or a higher version.
+1. Download and install **[Visual Studio 2022 Community Edition](https://www.visualstudio.com/)** or a higher version.
 2. Download and install the **[Requirements](#requirements)**.
 3. Clone this repository.
 4. Clone the dependencies (`git submodule update --init --recursive`).
