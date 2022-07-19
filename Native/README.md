@@ -6,7 +6,7 @@ An example of a RED4ext plugin using CMake.
 
 ### Requirements
 
-* **[CMake 3.8+](https://cmake.org/)**.
+* **[CMake 3.12+](https://cmake.org/)**.
 
 ### Steps
 
