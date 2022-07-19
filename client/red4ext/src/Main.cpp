@@ -28,6 +28,10 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
     }
     }
 
+    /*
+     * For more information about this function see https://docs.red4ext.com/mod-developers/creating-a-plugin#main.
+     */
+
     return true;
 }
 
@@ -45,6 +49,8 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::PluginInfo* aInfo)
      * the latest game's version that the SDK defined, if the runtime version specified here and the game's version do
      * not match, your plugin will not be loaded. If you want to use RED4ext only as a loader and you do not care about
      * game's version use "RED4EXT_RUNTIME_INDEPENDENT".
+     *
+     * For more information about this function see https://docs.red4ext.com/mod-developers/creating-a-plugin#query.
      */
 
     aInfo->name = L"RED4ext.Example.CMake";
@@ -59,6 +65,8 @@ RED4EXT_C_EXPORT uint32_t RED4EXT_CALL Supports()
     /*
      * This functions returns only what API version is support by your plugins.
      * You MUST have this function!
+     *
+     * For more information about this function see https://docs.red4ext.com/mod-developers/creating-a-plugin#supports.
      */
     return RED4EXT_API_VERSION_LATEST;
 }
