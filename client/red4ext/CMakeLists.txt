@@ -28,5 +28,12 @@ mark_as_advanced(
 add_library(zpp_bits INTERFACE)
 target_include_directories(zpp_bits INTERFACE "deps/zpp_bits")
 
+# Include Valve's GameNetworkingSockets
+find_package(GameNetworkingSockets CONFIG REQUIRED)
+
+# Include red lib
+add_compile_definitions(NOMINMAX)
+add_subdirectory(deps/red-lib)
+
 # Include the main project.
 add_subdirectory(src)

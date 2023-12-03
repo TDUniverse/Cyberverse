@@ -7,3 +7,6 @@
 [submodule "deps/GameNetworkingSockets"]
 	path = deps/GameNetworkingSockets
 	url = https://github.com/ValveSoftware/GameNetworkingSockets.git
+[submodule "deps/red-lib"]
+	path = deps/red-lib
+	url = https://github.com/psiberx/cp2077-red-lib
