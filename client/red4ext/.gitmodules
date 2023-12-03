@@ -4,3 +4,6 @@
 [submodule "deps/zpp_bits"]
 	path = deps/zpp_bits
 	url = https://github.com/eyalz800/zpp_bits
+[submodule "deps/GameNetworkingSockets"]
+	path = deps/GameNetworkingSockets
+	url = https://github.com/ValveSoftware/GameNetworkingSockets.git
