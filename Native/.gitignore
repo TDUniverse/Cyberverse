@@ -363,3 +363,6 @@ FodyWeavers.xsd
 
 ### Custom ###
 build/
+
+.idea/
+cmake-build-debug/
