@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 # Change the project name here!
-project(RED4ext.Example.CMake LANGUAGES CXX)
+project(CyberM.Red4Ext LANGUAGES CXX)
 
 # Set this option to ON to be able to use folders / filters in your project when using Visual Studio.
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -23,6 +23,10 @@ mark_as_advanced(
   RED4EXT_BUILD_EXAMPLES
   RED4EXT_HEADER_ONLY
 )
+
+# Include zpp_bits
+add_library(zpp_bits INTERFACE)
+target_include_directories(zpp_bits INTERFACE "deps/zpp_bits")
 
 # Include the main project.
 add_subdirectory(src)
