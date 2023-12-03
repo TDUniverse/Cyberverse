@@ -13,7 +13,5 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${PROJECT_HEADER_FILES} ${
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${PROJECT_HEADER_FILES} ${PROJECT_SRC_FILES})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE RED4ext::SDK)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE zpp_bits)
-target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC GameNetworkingSockets::shared)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE RedLib)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GameNetworkingSockets::shared)
