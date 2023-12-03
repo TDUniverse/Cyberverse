@@ -14,3 +14,4 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_D
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${PROJECT_HEADER_FILES} ${PROJECT_SRC_FILES})
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE RED4ext::SDK)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE zpp_bits)
