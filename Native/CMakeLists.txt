@@ -17,5 +17,9 @@ target_include_directories(zpp_bits INTERFACE "deps/zpp_bits")
 # Include Valve's GameNetworkingSockets
 find_package(GameNetworkingSockets CONFIG REQUIRED)
 
+# Include our protocol headers (shared with the client)
+add_library(protocol INTERFACE)
+target_include_directories(protocol INTERFACE "../RED4extModule/protocol")
+
 # Include the main project.
 add_subdirectory(src)
