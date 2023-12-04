@@ -1,5 +1,12 @@
-#include <zpp_bits.h>
+#include "NetworkGameSystem.h"
+
 #include <RED4ext/RED4ext.hpp>
+#include <RedLib.hpp>
+#include <steam/steamnetworkingsockets.h>
+#include <zpp_bits.h>
+
+const RED4ext::Sdk* SDK;
+RED4ext::PluginHandle PLUGIN = nullptr;
 
 RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::EMainReason aReason,
                                         const RED4ext::Sdk* aSdk)
@@ -18,10 +25,25 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
          * called with "Unload" reason.
          */
 
+        // TODO: Better.
+        SDK = aSdk;
+        PLUGIN = aHandle;
+
+        if (!NetworkGameSystem::Load())
+        {
+            return false;
+        }
+
+        Red::TypeInfoRegistrar::RegisterDiscovered();
+        aSdk->logger->Info(aHandle, "CyberM has loaded");
+        aSdk->logger->Info(aHandle, GetCommandLineA());
+        // TODO: Get rid of it or fix the hwnd lookup but maybe also the timing.
+        // SetWindowText(GetActiveWindow(), "Cyber-M v0.0.1 - (c) 2023 MeFisto94");
         break;
     }
     case RED4ext::EMainReason::Unload:
     {
+        NetworkGameSystem::Unload();
         /*
          * Here you can free resources you allocated during initalization or during the time your plugin was executed.
          */
@@ -54,8 +76,8 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::PluginInfo* aInfo)
      * For more information about this function see https://docs.red4ext.com/mod-developers/creating-a-plugin#query.
      */
 
-    aInfo->name = L"RED4ext.Example.CMake";
-    aInfo->author = L"WopsS";
+    aInfo->name = L"CyberM.Red4Ext";
+    aInfo->author = L"MeFisto94";
     aInfo->version = RED4EXT_SEMVER(1, 0, 0);
     aInfo->runtime = RED4EXT_RUNTIME_LATEST;
     aInfo->sdk = RED4EXT_SDK_LATEST;

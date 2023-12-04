@@ -35,5 +35,9 @@ find_package(GameNetworkingSockets CONFIG REQUIRED)
 add_compile_definitions(NOMINMAX)
 add_subdirectory(deps/red-lib)
 
+# Include our protocol headers
+add_library(protocol INTERFACE)
+target_include_directories(protocol INTERFACE "protocol")
+
 # Include the main project.
 add_subdirectory(src)
