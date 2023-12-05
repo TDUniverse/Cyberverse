@@ -2,7 +2,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED "")
 
 set(PROJECT_HEADER_FILES
   Main.h
-  NetworkGameSystem.h
+  NetworkGameSystem.h#
+  Utils.h
 )
 
 set(PROJECT_SRC_FILES

@@ -1,6 +1,7 @@
 #include "NetworkGameSystem.h"
 
 #include "Main.h"
+#include "Utils.h"
 
 #include "RED4ext/RTTISystem.hpp"
 #include "RED4ext/Scripting/Utils.hpp"
@@ -29,9 +30,9 @@ void NetworkGameSystem::Unload()
     GameNetworkingSockets_Kill();
 }
 
-bool NetworkGameSystem::ConnectToServer(RED4ext::CString host, uint16_t port)
+bool NetworkGameSystem::ConnectToServer(const std::string& host, uint16_t port)
 {
-    SDK->logger->InfoF(PLUGIN, "Trying to connect to server at %s:%d", host, port);
+    SDK->logger->InfoF(PLUGIN, "Trying to connect to server at %s:%d", host.c_str(), port);
 
     if (m_pInterface != nullptr)
     {
@@ -47,7 +48,7 @@ bool NetworkGameSystem::ConnectToServer(RED4ext::CString host, uint16_t port)
     }
 
     // Since I don't want to parse the ip manually and support both IP versions, I need to create a string first...
-    const auto connection_string_size = host.length + 2 + 5; // 2 (':' + \0) and 5 (65535)
+    const auto connection_string_size = host.length() + 2 + 5; // 2 (':' + \0) and 5 (65535)
     const auto connection_string = new char[connection_string_size];
     memset(connection_string, '\0', connection_string_size);
     sprintf_s(connection_string, connection_string_size, "%s:%d", host.c_str(), port);
@@ -56,6 +57,7 @@ bool NetworkGameSystem::ConnectToServer(RED4ext::CString host, uint16_t port)
     if (!address.ParseString(connection_string))
     {
         SDK->logger->WarnF(PLUGIN, "Failed to parse connection string \"%s\"", connection_string);
+        m_pInterface = nullptr; // prevent polling
         return false;
     }
 
@@ -77,13 +79,37 @@ bool NetworkGameSystem::ConnectToServer(RED4ext::CString host, uint16_t port)
 
 void NetworkGameSystem::OnNetworkUpdate(RED4ext::FrameInfo& frame_info, RED4ext::JobQueue& job_queue)
 {
-    //SDK->logger->Info(PLUGIN, "Tick tock, on the clock");
+    if (!m_hasTriedToConnect)
+    {
+        // We auto-connect on the first tick with the CLI address. We don't connect earlier because the message loop
+        // isn't run there yet and we are prone to time out.
+
+        ConnectToServer("127.0.0.1", 1337); // TODO: CLI parsing
+        m_hasTriedToConnect = true;
+    }
+
+    if (m_pInterface == nullptr)
+    {
+        return;
+    }
+
     PollIncomingMessages();
     m_pInterface->RunCallbacks(); // This shall be called in a loop.
+
+    // if (m_gameRestored)
+    // {
+    //     const auto player = CyberM::Utils::GetPlayer();
+    //     SDK->logger->InfoF(PLUGIN, "Player: %s (issa %s)", player->displayName.unk08.c_str(), player->nativeType->name.ToString());
+    //
+    //     //const auto transform = CyberM::Utils::Entity_GetWorldTransform(player);
+    //     const auto position = CyberM::Utils::Entity_GetWorldPosition(player);
+    //     SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f)", position.x.Bits, position.y.Bits, position.z.Bits);
+    // }
 }
 
 void NetworkGameSystem::OnRegisterUpdates(RED4ext::UpdateRegistrar* aRegistrar)
 {
+    // TODO: If we have no connection information passed on the command line, we have no reason to even register.
     IGameSystem::OnRegisterUpdates(aRegistrar);
     aRegistrar->RegisterUpdate(RED4ext::UpdateTickGroup::FrameBegin, this, "NetworkUpdate",
         [this](RED4ext::FrameInfo &frame_info, RED4ext::JobQueue &job_queue) {
@@ -109,6 +135,8 @@ void NetworkGameSystem::ConnectionStatusChangedCallback(SteamNetConnectionStatus
 
         // TODO: Maybe we could manage this singleton access better? But then, the Game's GameSystem Container is the owner of "this"
         Red::GetGameSystem<NetworkGameSystem>()->EnqueueMessage(0, auth_packet);
+    } else {
+        Red::GetGameSystem<NetworkGameSystem>()->FullyConnected = false;
     }
 }
 
@@ -128,8 +156,8 @@ bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, T frame)
     // TODO: derive the send flags from the channel id, i.e. lookup registered channels.
     assert(data.size() < std::numeric_limits<uint32_t>::max());
 
-    const auto result = m_pInterface->SendMessageToConnection(m_hConnection, data.data(),
-        static_cast<uint32_t>(data.size()), k_nSteamNetworkingSend_Reliable, nullptr);
+    const auto result = m_pInterface->SendMessageToConnection(
+        m_hConnection, data.data(), static_cast<uint32_t>(data.size()), k_nSteamNetworkingSend_Reliable, nullptr);
 
     if (result == k_EResultOK)
     {
@@ -176,43 +204,78 @@ void NetworkGameSystem::PollIncomingMessages()
         // Reset to the beginning, because the packets still contain the message frame
         in.reset();
 
-        // TODO: This should both be more generic probably _AND_ we need to consider how we want to hand this off to C#, given that they may want to control _all_ packet logic.
-        // This however depends on how flexible and moddable we want our, e.g. auth handling, to be.
+        // TODO: This should both be more generic probably _AND_ we need to consider how we want to hand this off to C#,
+        // given that they may want to control _all_ packet logic. This however depends on how flexible and moddable we
+        // want our, e.g. auth handling, to be.
         switch (frame.message_type)
         {
-            case EINIT_AUTH_RESULT:
+        case EINIT_AUTH_RESULT:
+        {
+            AuthResultClientBound auth_result_packet = {};
+            if (zpp::bits::failure(in(auth_result_packet)))
             {
-                AuthResultClientBound auth_result_packet = {};
-                if (zpp::bits::failure(in(auth_result_packet)))
-                {
-                    SDK->logger->Error(PLUGIN, "Faulty packet: AuthResultClientBound");
-                    pIncomingMsg->Release();
-                    continue;
-                }
-
-                switch (auth_result_packet.auth_result)
-                {
-                    case EAuthResult_Ok:
-                        SDK->logger->Info(PLUGIN, "Login accepted, let's go");
-                        // TODO: Follow-Up action
-                        break;
-                    case EAuthResult_ValidationFailed:
-                        SDK->logger->Warn(PLUGIN, "Login: Validation failed");
-                        break;
-                    case EAuthResult_VersionMismatch:
-                        SDK->logger->Warn(PLUGIN, "Login: Version mismatch");
-                        break;
-                    default:
-                        SDK->logger->ErrorF(PLUGIN, "Unknown auth result: %d", auth_result_packet.auth_result);
-                }
+                SDK->logger->Error(PLUGIN, "Faulty packet: AuthResultClientBound");
+                pIncomingMsg->Release();
+                continue;
             }
-            break;
 
-            default:
-                printf("Message Type: %d\n", frame.message_type);
+            switch (auth_result_packet.auth_result)
+            {
+            case EAuthResult_Ok:
+                SDK->logger->Info(PLUGIN, "Login accepted");
+                FullyConnected = true;
+                if (m_hasEnqueuedLoadLastCheckpoint && m_systemRequestsHandler)
+                {
+                    SDK->logger->Info(PLUGIN, "Loading the savegame");
+                    Red::CallVirtual(m_systemRequestsHandler, "LoadLastCheckpoint", false);
+                }
+                // TODO: Follow-Up action
                 break;
+            case EAuthResult_ValidationFailed:
+                SDK->logger->Warn(PLUGIN, "Login: Validation failed");
+                break;
+            case EAuthResult_VersionMismatch:
+                SDK->logger->Warn(PLUGIN, "Login: Version mismatch");
+                break;
+            default:
+                SDK->logger->ErrorF(PLUGIN, "Unknown auth result: %d", auth_result_packet.auth_result);
+            }
+        }
+        break;
+
+        default:
+            printf("Message Type: %d\n", frame.message_type);
+            break;
         }
 
         pIncomingMsg->Release();
     }
+}
+
+bool NetworkGameSystem::OnGameRestored()
+{
+    const auto res = IGameSystem::OnGameRestored();
+    SDK->logger->Info(PLUGIN, "Game restored: We're in the world");
+
+    const auto player = CyberM::Utils::GetPlayer();
+    SDK->logger->InfoF(PLUGIN, "Player: %s (issa %s)", player->displayName.unk08.c_str(), player->nativeType->name.ToString());
+
+    // Broken attempts:
+    // const auto transform = CyberM::Utils::Entity_GetWorldTransform(player);
+    // const auto position = CyberM::Utils::WorldPosition_ToVector4(transform.Position);
+    //SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f)", transform.Position.x.Bits, transform.Position.y.Bits, transform.Position.z.Bits);
+
+    const auto position = CyberM::Utils::Entity_GetWorldPosition(player);
+    SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f, %f)", position.X, position.Y, position.Z, position.W);
+
+    PlayerJoinWorld join_packet = {};
+    join_packet.position_x = position.X;
+    join_packet.position_y = position.Y;
+    join_packet.position_z = position.Z;
+
+    // TODO: Maybe we could manage this singleton access better? But then, the Game's GameSystem Container is the owner of "this"
+    Red::GetGameSystem<NetworkGameSystem>()->EnqueueMessage(0, join_packet);
+
+    m_gameRestored = true;
+    return res;
 }
