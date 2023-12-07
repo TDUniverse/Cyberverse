@@ -10,6 +10,7 @@
 #include <RedLib.hpp>
 #include <steam/isteamnetworkingsockets.h>
 #include <steam/steamnetworkingtypes.h>
+#include "PlayerActionTracker.h"
 
 class NetworkGameSystem : public Red::IGameSystem
 {
@@ -36,6 +37,7 @@ protected:
 
 public:
     bool FullyConnected = false;
+    Red::Handle<PlayerActionTracker> playerActionTracker = Red::Handle(new PlayerActionTracker());
 
     /// This is called by Redscript when the connection wasn't established as the UI had loaded the available savegames.
     /// Thus we will _enqueue_ the "LoadLastCheckpoint" call, that Redscript had otherwise done, had we connected fast enough.
@@ -57,6 +59,7 @@ private:
 RTTI_DEFINE_CLASS(NetworkGameSystem, {
     RTTI_METHOD(EnqueueLoadLastCheckpoint);
     RTTI_PROPERTY(FullyConnected);
+    RTTI_PROPERTY(playerActionTracker);
     RTTI_ALIAS("CyberM.Network.Managers.NetworkGameSystem");
 });
 

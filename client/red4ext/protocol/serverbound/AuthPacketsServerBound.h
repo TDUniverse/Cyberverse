@@ -5,15 +5,14 @@
 
 #include <zpp_bits.h>
 
-struct InitAuthServerBound: MessageFrame {
-    using serialize = zpp::bits::members<5>;
-
+struct InitAuthServerBound {
     std::string username; // TODO: limit to 0x255
     // TODO: proof
     uint32_t protocol_version;
 
-    InitAuthServerBound() : MessageFrame() {
-        message_type = EINIT_AUTH;
-        channel_id = 0; // TODO
+    inline static void FillMessageFrame(MessageFrame& frame)
+    {
+        frame.message_type = EINIT_AUTH;
+        frame.channel_id = 0; // TODO
     }
 };

@@ -11,6 +11,7 @@
 #include <steam/steamnetworkingsockets.h>
 
 #include "serverbound/AuthPacketsServerBound.h"
+#include "serverbound/WorldPacketsServerBound.h"
 #include "clientbound/AuthPacketsClientBound.h"
 
 #include <zpp_bits.h>
@@ -95,16 +96,6 @@ void NetworkGameSystem::OnNetworkUpdate(RED4ext::FrameInfo& frame_info, RED4ext:
 
     PollIncomingMessages();
     m_pInterface->RunCallbacks(); // This shall be called in a loop.
-
-    // if (m_gameRestored)
-    // {
-    //     const auto player = CyberM::Utils::GetPlayer();
-    //     SDK->logger->InfoF(PLUGIN, "Player: %s (issa %s)", player->displayName.unk08.c_str(), player->nativeType->name.ToString());
-    //
-    //     //const auto transform = CyberM::Utils::Entity_GetWorldTransform(player);
-    //     const auto position = CyberM::Utils::Entity_GetWorldPosition(player);
-    //     SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f)", position.x.Bits, position.y.Bits, position.z.Bits);
-    // }
 }
 
 void NetworkGameSystem::OnRegisterUpdates(RED4ext::UpdateRegistrar* aRegistrar)
@@ -141,15 +132,25 @@ void NetworkGameSystem::ConnectionStatusChangedCallback(SteamNetConnectionStatus
 }
 
 template<typename T>
-bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, T frame)
+bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, T content)
 {
+    auto frame = MessageFrame {};
     frame.channel_id = channel_id;
+    content.FillMessageFrame(frame);
 
     auto [data, out] = zpp::bits::data_out();
+
     auto zpp_result = out(frame);
     if (zpp::bits::failure(zpp_result))
     {
-        // Failed to serialize something
+        // Failed to serialize the frame(!)
+        return false;
+    }
+
+    zpp_result = out(content);
+    if (zpp::bits::failure(zpp_result))
+    {
+        // Failed to serialize the content
         return false;
     }
 
@@ -200,9 +201,6 @@ void NetworkGameSystem::PollIncomingMessages()
             pIncomingMsg->Release();
             continue;
         }
-
-        // Reset to the beginning, because the packets still contain the message frame
-        in.reset();
 
         // TODO: This should both be more generic probably _AND_ we need to consider how we want to hand this off to C#,
         // given that they may want to control _all_ packet logic. This however depends on how flexible and moddable we
@@ -256,9 +254,7 @@ bool NetworkGameSystem::OnGameRestored()
 {
     const auto res = IGameSystem::OnGameRestored();
     SDK->logger->Info(PLUGIN, "Game restored: We're in the world");
-
     const auto player = CyberM::Utils::GetPlayer();
-    SDK->logger->InfoF(PLUGIN, "Player: %s (issa %s)", player->displayName.unk08.c_str(), player->nativeType->name.ToString());
 
     // Broken attempts:
     // const auto transform = CyberM::Utils::Entity_GetWorldTransform(player);
