@@ -8,6 +8,7 @@
 #include <zpp_bits.h>
 #include <serverbound/EMessageTypeServerbound.h>
 #include <serverbound/AuthPacketsServerBound.h>
+#include <serverbound/WorldPacketsServerBound.h>
 #include <clientbound/EMessageTypeClientbound.h>
 #include <clientbound/AuthPacketsClientBound.h>
 
@@ -166,12 +167,12 @@ void GameServer::OnConnectionStatusChanged(const SteamNetConnectionStatusChanged
         // and you would keep their client in a state of limbo (connected,
         // but not logged on) until them.  I'm trying to keep this example
         // code really simple.
-        char nick[ 64 ];
-        snprintf( nick, 64, "BraveWarrior%d", 10000 + ( rand() % 100000 ) );
+        // char nick[ 64 ];
+        // snprintf( nick, 64, "BraveWarrior%d", 10000 + ( rand() % 100000 ) );
 
         // Send them a welcome message
-        snprintf(temp, 1024, "Welcome, stranger.  Thou art known to us for now as '%s'; upon thine command '/nick' we shall know thee otherwise.\n", nick);
-        printf(temp);
+        // snprintf(temp, 1024, "Welcome, stranger.  Thou art known to us for now as '%s'; upon thine command '/nick' we shall know thee otherwise.\n", nick);
+        // printf(temp);
         // SendStringToClient( pInfo->m_hConn, temp );
         //
         // // Also send them a list of everybody who is already connected
@@ -187,8 +188,8 @@ void GameServer::OnConnectionStatusChanged(const SteamNetConnectionStatusChanged
         // }
 
         // Let everybody else know who they are for now
-        snprintf( temp, 1024, "Hark!  A stranger hath joined this merry host.  For now we shall call them '%s'\n", nick );
-        printf(temp);
+        // snprintf( temp, 1024, "Hark!  A stranger hath joined this merry host.  For now we shall call them '%s'\n", nick );
+        // printf(temp);
         // SendStringToAllClients( temp, pInfo->m_hConn );
         //
         // // Add them to the client list, using std::map wacky syntax
@@ -216,15 +217,25 @@ void GameServer::PollConnectionStateChanges() const
 }
 
 template<typename T>
-bool GameServer::EnqueueMessage(HSteamNetConnection connection, uint8_t channel_id, T frame)
+bool GameServer::EnqueueMessage(HSteamNetConnection connection, uint8_t channel_id, T content)
 {
+    auto frame = MessageFrame {};
     frame.channel_id = channel_id;
+    content.FillMessageFrame(frame);
 
     auto [data, out] = zpp::bits::data_out();
+
     auto zpp_result = out(frame);
     if (zpp::bits::failure(zpp_result))
     {
-        // Failed to serialize something
+        // Failed to serialize the frame(!)
+        return false;
+    }
+
+    zpp_result = out(content);
+    if (zpp::bits::failure(zpp_result))
+    {
+        // Failed to serialize the content
         return false;
     }
 
@@ -277,9 +288,6 @@ void GameServer::PollIncomingMessages()
             continue;
         }
 
-        // Reset to the beginning, because the packets still contain the message frame
-        in.reset();
-
         // TODO: This should both be more generic probably _AND_ we need to consider how we want to hand this off to C#, given that they may want to control _all_ packet logic.
         // This however depends on how flexible and moddable we want our, e.g. auth handling, to be.
         switch (frame.message_type)
@@ -307,6 +315,19 @@ void GameServer::PollIncomingMessages()
                 }
 
                 EnqueueMessage(pIncomingMsg->m_conn, 0, result_packet);
+            }
+            break;
+
+            case  EPLAYER_JOIN_WORLD:
+            {
+                PlayerJoinWorld player_join = {};
+                if (zpp::bits::failure(in(player_join)))
+                {
+                    fprintf(stderr, "Faulty packet: PlayerJoinWorld\n");
+                    pIncomingMsg->Release();
+                    continue;
+                }
+                printf("Player joined the world at (%f, %f, %f)\n", player_join.position_x, player_join.position_y, player_join.position_z);
             }
             break;
 
