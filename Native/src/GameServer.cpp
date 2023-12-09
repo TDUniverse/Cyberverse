@@ -11,6 +11,7 @@
 #include <serverbound/WorldPacketsServerBound.h>
 #include <clientbound/EMessageTypeClientbound.h>
 #include <clientbound/AuthPacketsClientBound.h>
+#include <clientbound/WorldPacketsClientBound.h>
 
 bool GameServer::Initialize()
 {
@@ -273,8 +274,11 @@ void GameServer::PollIncomingMessages()
             return;
         }
 
-        // TODO: Handle or enqueue the message
-        printf("Received a packet with %d bytes\n", pIncomingMsg->m_cbSize);
+        // We ignore the movement packet. This is not the best logging anyway.
+        if (pIncomingMsg->m_cbSize != 20)
+        {
+            printf("Received a packet with %d bytes\n", pIncomingMsg->m_cbSize);
+        }
 
         auto [data, in] = zpp::bits::data_in();
         const auto begin = (std::byte*)pIncomingMsg->GetData();
@@ -318,7 +322,7 @@ void GameServer::PollIncomingMessages()
             }
             break;
 
-            case  EPLAYER_JOIN_WORLD:
+            case EPLAYER_JOIN_WORLD:
             {
                 PlayerJoinWorld player_join = {};
                 if (zpp::bits::failure(in(player_join)))
@@ -328,6 +332,41 @@ void GameServer::PollIncomingMessages()
                     continue;
                 }
                 printf("Player joined the world at (%f, %f, %f)\n", player_join.position_x, player_join.position_y, player_join.position_z);
+            }
+            break;
+
+            case ePlayerActionTracked:
+            {
+                PlayerActionTracked action_tracked = {};
+                if (zpp::bits::failure(in(action_tracked)))
+                {
+                    fprintf(stderr, "Faulty packet: PlayerActionTracked\n");
+                    pIncomingMsg->Release();
+                    continue;
+                }
+
+                if (action_tracked.action == eACTION_JUMP)
+                {
+                    // Character.Panam
+                    const SpawnEntity spawn_entity = { 0, "Character.Judy", action_tracked.worldTransform };
+                    EnqueueMessage(pIncomingMsg->m_conn, 1, spawn_entity);
+                }
+            }
+            break;
+
+            case ePlayerPositionUpdate:
+            {
+                PlayerPositionUpdate position_update = {};
+                if (zpp::bits::failure(in(position_update)))
+                {
+                    fprintf(stderr, "Faulty packet: PlayerPositionUpdate\n");
+                    pIncomingMsg->Release();
+                    continue;
+                }
+
+                // TODO: Implement differently, don't teleport.
+                const TeleportEntity teleport_entity = { 0, position_update.worldTransform, position_update.yaw };
+                EnqueueMessage(pIncomingMsg->m_conn, 1, teleport_entity);
             }
             break;
 
