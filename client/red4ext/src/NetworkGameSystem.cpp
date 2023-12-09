@@ -4,8 +4,11 @@
 #include "Utils.h"
 
 #include "RED4ext/RTTISystem.hpp"
+#include "RED4ext/Scripting/Natives/Generated/EulerAngles.hpp"
+#include "RED4ext/Scripting/Natives/Generated/game/TeleportationFacility.hpp"
 #include "RED4ext/Scripting/Utils.hpp"
 #include "RED4ext/SystemUpdate.hpp"
+
 #include <steam/isteamnetworkingsockets.h>
 #include <steam/isteamnetworkingutils.h> // Required, see https://github.com/ValveSoftware/GameNetworkingSockets/issues/171^
 #include <steam/steamnetworkingsockets.h>
@@ -13,6 +16,7 @@
 #include "serverbound/AuthPacketsServerBound.h"
 #include "serverbound/WorldPacketsServerBound.h"
 #include "clientbound/AuthPacketsClientBound.h"
+#include "clientbound/WorldPacketsClientBound.h"
 
 #include <zpp_bits.h>
 
@@ -80,6 +84,7 @@ bool NetworkGameSystem::ConnectToServer(const std::string& host, uint16_t port)
 
 void NetworkGameSystem::OnNetworkUpdate(RED4ext::FrameInfo& frame_info, RED4ext::JobQueue& job_queue)
 {
+    // TODO: make this framerate indepedent, maybe also use multiple UpdateTickGroups.
     if (!m_hasTriedToConnect)
     {
         // We auto-connect on the first tick with the CLI address. We don't connect earlier because the message loop
@@ -95,6 +100,8 @@ void NetworkGameSystem::OnNetworkUpdate(RED4ext::FrameInfo& frame_info, RED4ext:
     }
 
     PollIncomingMessages();
+    TrackPlayerPosition();
+
     m_pInterface->RunCallbacks(); // This shall be called in a loop.
 }
 
@@ -188,7 +195,7 @@ void NetworkGameSystem::PollIncomingMessages()
         }
 
         // TODO: Handle or enqueue the message
-        SDK->logger->InfoF(PLUGIN, "Received a packet with %d bytes", pIncomingMsg->m_cbSize);
+        //SDK->logger->InfoF(PLUGIN, "Received a packet with %d bytes", pIncomingMsg->m_cbSize);
 
         auto [data, in] = zpp::bits::data_in();
         const auto begin = (std::byte*)pIncomingMsg->GetData();
@@ -241,6 +248,91 @@ void NetworkGameSystem::PollIncomingMessages()
         }
         break;
 
+        case eSpawnEntity:
+        {
+            SpawnEntity spawn_entity = {};
+            if (zpp::bits::failure(in(spawn_entity)))
+            {
+                SDK->logger->Error(PLUGIN, "Faulty packet: SpawnEntity");
+                pIncomingMsg->Release();
+                continue;
+            }
+
+            if (m_networkedEntitiesLookup.contains(spawn_entity.networkedEntityId))
+            {
+                SDK->logger->WarnF(PLUGIN, "Already have a spawned entity for %llu", spawn_entity.networkedEntityId);
+                continue;
+            }
+
+            SDK->logger->InfoF(PLUGIN, "Spawning entity %s", spawn_entity.recordId.c_str());
+            // TODO: separate spawning component
+            // TODO: SpawnTransientEntity should return the EntityId for a Map<NetworkedEntityId, LocalEntityId>, especially for further updates.
+            RED4ext::TweakDBID entityName = { spawn_entity.recordId.c_str() };
+            RED4ext::Vector4 worldPosition = { spawn_entity.spawnPosition.x, spawn_entity.spawnPosition.y, spawn_entity.spawnPosition.z, 1.0 };
+            RED4ext::Quaternion worldOrientation = { 0.0, 0.0, 0.0, 1.0 };
+
+            RED4ext::ent::EntityID entityId;
+            if (!Red::CallVirtual(this, "SpawnTransientEntity", entityId, entityName, worldPosition, worldOrientation))
+            {
+                SDK->logger->Warn(PLUGIN, "Failed to spawn entity!");
+            }
+
+            // TODO: Validation. already contained? Error!
+            SDK->logger->InfoF(PLUGIN, "Got Entity Id %llu for networkId %llu", entityId.hash, spawn_entity.networkedEntityId);
+            m_networkedEntitiesLookup.insert(std::make_pair(spawn_entity.networkedEntityId, entityId));
+        }
+        break;
+
+        case eTeleportEntity:
+        {
+            TeleportEntity teleport = {};
+            if (zpp::bits::failure(in(teleport)))
+            {
+                SDK->logger->Error(PLUGIN, "Faulty packet: TeleportEntity");
+                pIncomingMsg->Release();
+                continue;
+            }
+
+            if (!m_networkedEntitiesLookup.contains(teleport.networkedEntityId))
+            {
+                SDK->logger->WarnF(PLUGIN, "Entity Teleport packet for unknown networkedEntityId %llu. Map size %d",
+                                   teleport.networkedEntityId, m_networkedEntitiesLookup.size());
+                break;
+            }
+
+            const auto entityId = m_networkedEntitiesLookup[teleport.networkedEntityId];
+            RED4ext::Vector4 worldPosition = { teleport.targetPosition.x, teleport.targetPosition.y, teleport.targetPosition.z, 1.0 };
+            //Red::CallVirtual(this, "TeleportEntity", gameInstance, entityId, worldPosition, worldOrientation);
+
+            // We need to call this from native code, as I haven't found a way to do a downcast in scripts from entity to gameobject
+            Red::Handle<Red::IGameSystem> dynamicEntitySystem;
+            if (!Red::CallStatic("ScriptGameInstance", "GetDynamicEntitySystem", dynamicEntitySystem))
+            {
+                SDK->logger->Warn(PLUGIN, "Getting the dynamic entity system failed");
+                continue;
+            }
+
+            Red::Handle<Red::Entity> entity;
+            if (!Red::CallVirtual(dynamicEntitySystem, "GetEntity", entity, entityId) || entity == nullptr)
+            {
+                SDK->logger->Warn(PLUGIN, "Failed to get the entity by id");
+                continue;
+            }
+
+            // TODO: For most, this is actually a NPCPuppet, for those that aren't, this will crash.
+
+            // RED4ext::EulerAngles angles = { 0.0f, 0.0f, 0.0f };
+            // const auto teleportFacility = Red::GetGameSystem<RED4ext::TeleportationFacility>();
+            // if (!Red::CallVirtual(teleportFacility, "Teleport", entity /*"game object"*/, worldPosition, angles))
+            // {
+            //     SDK->logger->Warn(PLUGIN, "Failed to teleport");
+            //     continue;
+            // }
+
+            Red::CallVirtual(this, "TeleportPuppet", entity, worldPosition, teleport.yaw);
+        }
+        break;
+
         default:
             printf("Message Type: %d\n", frame.message_type);
             break;
@@ -259,7 +351,8 @@ bool NetworkGameSystem::OnGameRestored()
     // Broken attempts:
     // const auto transform = CyberM::Utils::Entity_GetWorldTransform(player);
     // const auto position = CyberM::Utils::WorldPosition_ToVector4(transform.Position);
-    //SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f)", transform.Position.x.Bits, transform.Position.y.Bits, transform.Position.z.Bits);
+    // SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f)", transform.Position.x.Bits, transform.Position.y.Bits,
+    // transform.Position.z.Bits);
 
     const auto position = CyberM::Utils::Entity_GetWorldPosition(player);
     SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f, %f)", position.X, position.Y, position.Z, position.W);
@@ -269,9 +362,21 @@ bool NetworkGameSystem::OnGameRestored()
     join_packet.position_y = position.Y;
     join_packet.position_z = position.Z;
 
-    // TODO: Maybe we could manage this singleton access better? But then, the Game's GameSystem Container is the owner of "this"
+    // TODO: Maybe we could manage this singleton access better? But then, the Game's GameSystem Container is the owner
+    // of "this"
     Red::GetGameSystem<NetworkGameSystem>()->EnqueueMessage(0, join_packet);
 
     m_gameRestored = true;
     return res;
+}
+
+void NetworkGameSystem::TrackPlayerPosition()
+{
+    const auto player = CyberM::Utils::GetPlayer();
+    const auto [X, Y, Z, W] = CyberM::Utils::Entity_GetWorldPosition(player);
+    const auto orientation = CyberM::Utils::Entity_GetWorldOrientation(player);
+    const auto euler = CyberM::Utils::Quaternion_ToEulerAngles(orientation);
+
+    const PlayerPositionUpdate position_update = { {  X, Y, Z }, euler.Yaw};
+    this->EnqueueMessage(1, position_update);
 }

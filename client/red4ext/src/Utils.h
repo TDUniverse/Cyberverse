@@ -1,5 +1,6 @@
 #pragma once
 #include "RED4ext/Handle.hpp"
+#include "RED4ext/Scripting/Natives/Generated/EulerAngles.hpp"
 #include "RED4ext/Scripting/Natives/Generated/Vector4.hpp"
 #include "RED4ext/Scripting/Natives/Generated/WorldTransform.hpp"
 #include "RED4ext/Scripting/Natives/Generated/cp/PlayerSystem.hpp"
@@ -32,12 +33,27 @@ namespace CyberM::Utils
         return position;
     }
 
+    inline RED4ext::Quaternion Entity_GetWorldOrientation(const RED4ext::Handle<RED4ext::Entity>& entity)
+    {
+        RED4ext::Quaternion quaternion = {};
+        Red::CallVirtual(entity, "GetWorldOrientation", quaternion);
+        return quaternion;
+    }
+
     /// Caution: This doesn't even seem to work as expected.
+    /// Edit: Maybe it does now
     inline RED4ext::Vector4 WorldPosition_ToVector4(const RED4ext::WorldPosition position)
     {
         RED4ext::Vector4 vec4 = {};
-        Red::CallStatic("WorldPosition", "ToVector4", position, vec4);
+        Red::CallStatic("WorldPosition", "ToVector4", vec4, position);
         return vec4;
+    }
+
+    inline RED4ext::EulerAngles Quaternion_ToEulerAngles(const RED4ext::Quaternion quat)
+    {
+        RED4ext::EulerAngles euler = {};
+        Red::CallStatic("Quaternion", "ToEulerAngles", euler, quat);
+        return euler;
     }
 }
 
