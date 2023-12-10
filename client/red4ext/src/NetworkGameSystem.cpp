@@ -355,7 +355,7 @@ void NetworkGameSystem::PollIncomingMessages()
                 break;
             }
 
-            SDK->logger->ErrorF(PLUGIN, "New Interpolation Data: yaw %f -> %f, position: (%f, %f, %f) -> (%f, %f, %f)", yawSource, teleport.yaw, positionSource.X, positionSource.Y, positionSource.Z, teleport.targetPosition.x, teleport.targetPosition.y, teleport.targetPosition.z);
+            SDK->logger->TraceF(PLUGIN, "New Interpolation Data: yaw %f -> %f, position: (%f, %f, %f) -> (%f, %f, %f)", yawSource, teleport.yaw, positionSource.X, positionSource.Y, positionSource.Z, teleport.targetPosition.x, teleport.targetPosition.y, teleport.targetPosition.z);
 
             if (m_LastTeleportCommand.contains(entityId))
             {
@@ -363,7 +363,6 @@ void NetworkGameSystem::PollIncomingMessages()
                 //  but that probably means more lags/teleports again, because the gap between teleports becomes larger.
                 //  but then, does stopping really change a thing? The best would be to _update_ the existing command,
                 //  but is that working? who knows!
-                SDK->logger->Warn(PLUGIN, "Detected previous teleport command, stopping");
                 const auto commandRef = m_LastTeleportCommand[entityId];
                 Red::CallVirtual(this, "StopAICommand", entity.value(), commandRef);
             }
@@ -425,30 +424,34 @@ void NetworkGameSystem::TrackPlayerPosition(float deltaTime)
     const auto player = CyberM::Utils::GetPlayer();
     const auto [X, Y, Z, W] = CyberM::Utils::Entity_GetWorldPosition(player);
     const auto orientation = CyberM::Utils::Entity_GetWorldOrientation(player);
-    const auto euler = CyberM::Utils::Quaternion_ToEulerAngles(orientation);
+    const auto [Roll, Pitch, Yaw] = CyberM::Utils::Quaternion_ToEulerAngles(orientation);
 
-    const PlayerPositionUpdate position_update = { {  X, Y, Z }, euler.Yaw};
+    const PlayerPositionUpdate position_update = { {  X, Y, Z }, Yaw};
     this->EnqueueMessage(1, position_update);
 }
 
 void NetworkGameSystem::InterpolatePuppets(const float deltaTime)
 {
-    for (auto& [entityId, interpolator] : m_interpolationData)
+    for (auto it = m_interpolationData.begin(); it != m_interpolationData.end();)
     {
+        auto& entityId = it->first;
+        auto& interpolator = it->second;
+
         const auto interpolationProgress = std::min(1.0f, interpolator.CalcInterpolationProgress(deltaTime));
         const auto targetDestination = CyberM::Utils::LerpLocal(interpolator.positionSource, interpolator.positionTarget, interpolationProgress);
 
         // TODO: Better interpolation here, e.g. if we go from 5 -> 355°, we should only do 10°, not 350.
         const float targetYaw = interpolator.rotationSource + interpolationProgress * (interpolator.rotationTarget - interpolator.rotationSource);
         const auto targetDestinationVec4 = CyberM::Utils::Vector3To4(targetDestination); // TODO: Get rid of this function call
-        SDK->logger->InfoF(PLUGIN, "Interpolation Progress: %f, yaw: %f. dest (%f, %f, %f)", interpolationProgress, targetYaw, targetDestinationVec4.X, targetDestinationVec4.Y, targetDestinationVec4.Z);
+        SDK->logger->TraceF(PLUGIN, "Interpolation Progress: %f, yaw: %f. dest (%f, %f, %f)", interpolationProgress, targetYaw, targetDestinationVec4.X, targetDestinationVec4.Y, targetDestinationVec4.Z);
 
         SetEntityPosition(entityId, targetDestinationVec4, targetYaw);
 
         if (interpolationProgress >= 1.0f)
         {
-            SDK->logger->Info(PLUGIN, "Should remove interpolation...");
-            //m_interpolationData.erase(entityId);
+            it = m_interpolationData.erase(it);
+        } else {
+            ++it;
         }
     }
 }

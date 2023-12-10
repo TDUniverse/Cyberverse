@@ -26,7 +26,6 @@ struct InterpolationData {
         // const auto elapsedSeconds = (endTime - std::chrono::system_clock::now().time_since_epoch().count()) / 1000000.0f;
         // return elapsedSeconds / durationSeconds;
         timeElapsed += deltaTime;
-        SDK->logger->InfoF(PLUGIN, "elapsed seconds: %f", timeElapsed);
         return timeElapsed / durationSeconds;
     }
 
