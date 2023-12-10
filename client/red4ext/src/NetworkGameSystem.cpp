@@ -100,7 +100,8 @@ void NetworkGameSystem::OnNetworkUpdate(RED4ext::FrameInfo& frame_info, RED4ext:
     }
 
     PollIncomingMessages();
-    TrackPlayerPosition();
+    TrackPlayerPosition(frame_info.deltaTime);
+    InterpolatePuppets(frame_info.deltaTime);
 
     m_pInterface->RunCallbacks(); // This shall be called in a loop.
 }
@@ -141,7 +142,7 @@ void NetworkGameSystem::ConnectionStatusChangedCallback(SteamNetConnectionStatus
 template<typename T>
 bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, T content)
 {
-    auto frame = MessageFrame {};
+    auto frame = MessageFrame{};
     frame.channel_id = channel_id;
     content.FillMessageFrame(frame);
 
@@ -175,6 +176,34 @@ bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, T content)
     SDK->logger->ErrorF(PLUGIN, "NetworkGameSystem::EnqueueMessage(%d) => Error %d\n", channel_id, result);
     return false;
 }
+
+void NetworkGameSystem::SetEntityPosition(const RED4ext::ent::EntityID entityId, RED4ext::Vector4 worldPosition, float yaw)
+{
+    const auto entity = CyberM::Utils::GetDynamicEntity(entityId);
+
+    // TODO: For most, this is actually a NPCPuppet, for those that aren't, this will crash.
+
+
+    if (entity.has_value())
+    {
+        // AI
+        RED4ext::Handle<RED4ext::AICommand> commandRef;
+        Red::CallVirtual(this, "TeleportPuppet", commandRef, entity.value(), worldPosition, yaw);
+        m_LastTeleportCommand[entityId] = commandRef;
+
+        // random game objects
+        // RED4ext::EulerAngles angles = { 0.0f, 0.0f, yaw };
+        // const auto teleportFacility = Red::GetGameSystem<RED4ext::TeleportationFacility>();
+        // if (!Red::CallVirtual(teleportFacility, "Teleport", entity.value() /*"game object"*/, worldPosition, angles))
+        // {
+        //     SDK->logger->Warn(PLUGIN, "Failed to teleport");
+        // }
+    } else
+    {
+        SDK->logger->Warn(PLUGIN, "Cannot SetEntityPosition, because the entity hasn't been found");
+    }
+}
+
 
 void NetworkGameSystem::PollIncomingMessages()
 {
@@ -301,35 +330,48 @@ void NetworkGameSystem::PollIncomingMessages()
             }
 
             const auto entityId = m_networkedEntitiesLookup[teleport.networkedEntityId];
-            RED4ext::Vector4 worldPosition = { teleport.targetPosition.x, teleport.targetPosition.y, teleport.targetPosition.z, 1.0 };
-            //Red::CallVirtual(this, "TeleportEntity", gameInstance, entityId, worldPosition, worldOrientation);
+            const RED4ext::Vector4 worldPosition = { teleport.targetPosition.x, teleport.targetPosition.y, teleport.targetPosition.z, 1.0 };
 
-            // We need to call this from native code, as I haven't found a way to do a downcast in scripts from entity to gameobject
-            Red::Handle<Red::IGameSystem> dynamicEntitySystem;
-            if (!Red::CallStatic("ScriptGameInstance", "GetDynamicEntitySystem", dynamicEntitySystem))
+            // TODO: If teleport flag is set
+            //SetEntityPosition(entityId, worldPosition, teleport.yaw);
+
+            const auto entity = CyberM::Utils::GetDynamicEntity(entityId);
+            if (!entity.has_value())
             {
-                SDK->logger->Warn(PLUGIN, "Getting the dynamic entity system failed");
-                continue;
+                SDK->logger->Info(PLUGIN, "Skipping TeleportEntity");
+                break;
             }
 
-            Red::Handle<Red::Entity> entity;
-            if (!Red::CallVirtual(dynamicEntitySystem, "GetEntity", entity, entityId) || entity == nullptr)
+            const auto yawSource = CyberM::Utils::Quaternion_ToEulerAngles(CyberM::Utils::Entity_GetWorldOrientation(entity.value())).Yaw;
+            const auto positionSource = CyberM::Utils::Entity_GetWorldPosition(entity.value());
+
+            if (positionSource.X == 0.0 && positionSource.Y == 0.0 && positionSource.Z == 0.0)
             {
-                SDK->logger->Warn(PLUGIN, "Failed to get the entity by id");
-                continue;
+                // TODO: let's pray that this doesn't have a side effect when players DO reside at (0, 0, 0)
+                // The first interpolation would go from (0, 0, 0) to target position, but that would despawn and destroy
+                // the entity, since it's too far away.
+                SDK->logger->Warn(PLUGIN, "Server Bug: Teleport Entity without the teleport flag for a fresh spawned entity");
+                SetEntityPosition(entityId, worldPosition, teleport.yaw);
+                break;
             }
 
-            // TODO: For most, this is actually a NPCPuppet, for those that aren't, this will crash.
+            SDK->logger->ErrorF(PLUGIN, "New Interpolation Data: yaw %f -> %f, position: (%f, %f, %f) -> (%f, %f, %f)", yawSource, teleport.yaw, positionSource.X, positionSource.Y, positionSource.Z, teleport.targetPosition.x, teleport.targetPosition.y, teleport.targetPosition.z);
 
-            // RED4ext::EulerAngles angles = { 0.0f, 0.0f, 0.0f };
-            // const auto teleportFacility = Red::GetGameSystem<RED4ext::TeleportationFacility>();
-            // if (!Red::CallVirtual(teleportFacility, "Teleport", entity /*"game object"*/, worldPosition, angles))
-            // {
-            //     SDK->logger->Warn(PLUGIN, "Failed to teleport");
-            //     continue;
-            // }
+            if (m_LastTeleportCommand.contains(entityId))
+            {
+                // TODO: Alternatively we could query the command and if it's still running just skipping enqueing a new comand
+                //  but that probably means more lags/teleports again, because the gap between teleports becomes larger.
+                //  but then, does stopping really change a thing? The best would be to _update_ the existing command,
+                //  but is that working? who knows!
+                SDK->logger->Warn(PLUGIN, "Detected previous teleport command, stopping");
+                const auto commandRef = m_LastTeleportCommand[entityId];
+                Red::CallVirtual(this, "StopAICommand", entity.value(), commandRef);
+            }
 
-            Red::CallVirtual(this, "TeleportPuppet", entity, worldPosition, teleport.yaw);
+            // TODO: This should probably be a map<id, list<data>>, so that a server that eagerly sends too much data doesn't increase interpolation delay
+            //  in contrast, we can just increase the time velocity of the interpolator
+            const auto interpolation_data = InterpolationData(CyberM::Utils::Vector4To3(positionSource), teleport.targetPosition, yawSource, teleport.yaw, 0.1f);
+            m_interpolationData[entityId] = interpolation_data;
         }
         break;
 
@@ -370,8 +412,16 @@ bool NetworkGameSystem::OnGameRestored()
     return res;
 }
 
-void NetworkGameSystem::TrackPlayerPosition()
+void NetworkGameSystem::TrackPlayerPosition(float deltaTime)
 {
+    m_TimeSinceLastPlayerPositionSync += deltaTime;
+    if (m_TimeSinceLastPlayerPositionSync < 0.1f /* update rate*/)
+    {
+        return;
+    }
+
+    m_TimeSinceLastPlayerPositionSync = 0.0f;
+
     const auto player = CyberM::Utils::GetPlayer();
     const auto [X, Y, Z, W] = CyberM::Utils::Entity_GetWorldPosition(player);
     const auto orientation = CyberM::Utils::Entity_GetWorldOrientation(player);
@@ -379,4 +429,26 @@ void NetworkGameSystem::TrackPlayerPosition()
 
     const PlayerPositionUpdate position_update = { {  X, Y, Z }, euler.Yaw};
     this->EnqueueMessage(1, position_update);
+}
+
+void NetworkGameSystem::InterpolatePuppets(const float deltaTime)
+{
+    for (auto& [entityId, interpolator] : m_interpolationData)
+    {
+        const auto interpolationProgress = std::min(1.0f, interpolator.CalcInterpolationProgress(deltaTime));
+        const auto targetDestination = CyberM::Utils::LerpLocal(interpolator.positionSource, interpolator.positionTarget, interpolationProgress);
+
+        // TODO: Better interpolation here, e.g. if we go from 5 -> 355°, we should only do 10°, not 350.
+        const float targetYaw = interpolator.rotationSource + interpolationProgress * (interpolator.rotationTarget - interpolator.rotationSource);
+        const auto targetDestinationVec4 = CyberM::Utils::Vector3To4(targetDestination); // TODO: Get rid of this function call
+        SDK->logger->InfoF(PLUGIN, "Interpolation Progress: %f, yaw: %f. dest (%f, %f, %f)", interpolationProgress, targetYaw, targetDestinationVec4.X, targetDestinationVec4.Y, targetDestinationVec4.Z);
+
+        SetEntityPosition(entityId, targetDestinationVec4, targetYaw);
+
+        if (interpolationProgress >= 1.0f)
+        {
+            SDK->logger->Info(PLUGIN, "Should remove interpolation...");
+            //m_interpolationData.erase(entityId);
+        }
+    }
 }

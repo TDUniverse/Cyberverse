@@ -8,9 +8,13 @@
 #include "RED4ext/Scripting/Stack.hpp"
 
 #include "PlayerActionTracker.h"
+#include "PlayerSync/InterpolationData.h"
+#include "RED4ext/Scripting/Natives/Generated/AI/Command.hpp"
+#include "RED4ext/Scripting/Natives/Generated/Vector4.hpp"
 #include "RED4ext/Scripting/Natives/entEntityID.hpp"
 
 #include <RedLib.hpp>
+#include <clientbound/WorldPacketsClientBound.h>
 #include <map>
 #include <steam/isteamnetworkingsockets.h>
 #include <steam/steamnetworkingtypes.h>
@@ -27,6 +31,9 @@ private:
     Red::Handle<Red::ink::ISystemRequestsHandler> m_systemRequestsHandler;
     bool m_gameRestored = false;
     std::map<uint64_t, RED4ext::ent::EntityID> m_networkedEntitiesLookup;
+    std::map<RED4ext::ent::EntityID, InterpolationData> m_interpolationData;
+    std::map<RED4ext::ent::EntityID, RED4ext::Handle<RED4ext::AICommand>> m_LastTeleportCommand;
+    float m_TimeSinceLastPlayerPositionSync;
 
 private:
     void OnRegisterUpdates(RED4ext::UpdateRegistrar* aRegistrar) override;
@@ -36,10 +43,12 @@ private:
     bool ConnectToServer(const std::string& host, uint16_t port);
     static void ConnectionStatusChangedCallback(SteamNetConnectionStatusChangedCallback_t* pInfo);
     void OnNetworkUpdate(RED4ext::FrameInfo& frame_info, RED4ext::JobQueue& job_queue);
+    void InterpolatePuppets(float deltaTime);
+    void SetEntityPosition(RED4ext::ent::EntityID entityId, RED4ext::Vector4 worldPosition, float yaw);
 
 protected:
     void PollIncomingMessages();
-    void TrackPlayerPosition();
+    void TrackPlayerPosition(float deltaTime);
 
 public:
     bool FullyConnected = false;
@@ -53,7 +62,8 @@ public:
         m_hasEnqueuedLoadLastCheckpoint = true;
     }
 
-    template<typename T> bool EnqueueMessage(uint8_t channel_id, T frame);
+    template<typename T>
+    bool EnqueueMessage(uint8_t channel_id, T frame);
 
     /// Called from the plugin load and unload events
     static bool Load();

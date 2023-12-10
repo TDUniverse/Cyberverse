@@ -4,6 +4,7 @@
 #include "RED4ext/Scripting/Natives/Generated/Vector4.hpp"
 #include "RED4ext/Scripting/Natives/Generated/WorldTransform.hpp"
 #include "RED4ext/Scripting/Natives/Generated/cp/PlayerSystem.hpp"
+#include "RED4ext/Scripting/Natives/Generated/ent/EntityID.hpp"
 #include "RED4ext/Scripting/Natives/Generated/game/Object.hpp"
 #include "RedLib.hpp"
 
@@ -54,6 +55,47 @@ namespace CyberM::Utils
         RED4ext::EulerAngles euler = {};
         Red::CallStatic("Quaternion", "ToEulerAngles", euler, quat);
         return euler;
+    }
+
+    inline RED4ext::Vector4 Vector3To4(const RED4ext::Vector3 vec)
+    {
+        RED4ext::Vector4 out = {};
+        Red::CallStatic("Vector4", "Vector3To4", out, vec);
+        return out;
+    }
+
+    inline RED4ext::Vector3 Vector4To3(const RED4ext::Vector4 vec)
+    {
+        RED4ext::Vector3 out = {};
+        Red::CallStatic("Vector4", "Vector4To3", out, vec);
+        return out;
+    }
+
+    inline std::optional<Red::Handle<Red::Entity>> GetDynamicEntity(const RED4ext::EntityID& entityId)
+    {
+        Red::Handle<Red::IGameSystem> dynamicEntitySystem;
+        if (!Red::CallStatic("ScriptGameInstance", "GetDynamicEntitySystem", dynamicEntitySystem))
+        {
+            SDK->logger->Warn(PLUGIN, "Getting the dynamic entity system failed");
+            return {};
+        }
+
+        Red::Handle<Red::Entity> entity;
+        if (!Red::CallVirtual(dynamicEntitySystem, "GetEntity", entity, entityId) || entity == nullptr)
+        {
+            SDK->logger->WarnF(PLUGIN, "Failed to get the entity (%llu) by id", entityId.hash);
+            return {};
+        }
+
+        return entity;
+    }
+
+    inline RED4ext::Vector3 LerpLocal(const RED4ext::Vector3& from, const RED4ext::Vector3& to, float t) noexcept
+    {
+        const auto x = from.X + (to.X - from.X) * t;
+        const auto y = from.Y + (to.Y - from.Y) * t;
+        const auto z = from.Z + (to.Z - from.Z) * t;
+        return RED4ext::Vector3(x, y, z);
     }
 }
 

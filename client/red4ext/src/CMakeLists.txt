@@ -5,6 +5,7 @@ set(PROJECT_HEADER_FILES
   NetworkGameSystem.h
   Utils.h
   PlayerActionTracker.h
+        PlayerSync/InterpolationData.h
 )
 
 set(PROJECT_SRC_FILES
