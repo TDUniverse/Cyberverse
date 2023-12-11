@@ -1,5 +1,6 @@
 #include "NetworkGameSystem.h"
 
+#include "CommandLine.h"
 #include "Main.h"
 #include "Utils.h"
 
@@ -89,9 +90,14 @@ void NetworkGameSystem::OnNetworkUpdate(RED4ext::FrameInfo& frame_info, RED4ext:
     {
         // We auto-connect on the first tick with the CLI address. We don't connect earlier because the message loop
         // isn't run there yet and we are prone to time out.
-
-        ConnectToServer("127.0.0.1", 1337); // TODO: CLI parsing
-        m_hasTriedToConnect = true;
+        const auto commandLine = GetCommandLineA();
+        const auto host = ParseHostFromCommandLine(commandLine);
+        const auto port = ParsePortFromCommandLine(commandLine);
+        if (host.has_value() && port.has_value())
+        {
+            ConnectToServer(host.value(), port.value());
+        }
+        m_hasTriedToConnect = true; // We lie here, to prevent parsing the cli every time.
     }
 
     if (m_pInterface == nullptr)
@@ -180,9 +186,7 @@ bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, T content)
 void NetworkGameSystem::SetEntityPosition(const RED4ext::ent::EntityID entityId, RED4ext::Vector4 worldPosition, float yaw)
 {
     const auto entity = CyberM::Utils::GetDynamicEntity(entityId);
-
     // TODO: For most, this is actually a NPCPuppet, for those that aren't, this will crash.
-
 
     if (entity.has_value())
     {

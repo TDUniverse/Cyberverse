@@ -6,6 +6,7 @@ set(PROJECT_HEADER_FILES
   Utils.h
   PlayerActionTracker.h
         PlayerSync/InterpolationData.h
+        CommandLine.h
 )
 
 set(PROJECT_SRC_FILES

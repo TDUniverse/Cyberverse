@@ -36,7 +36,6 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
 
         Red::TypeInfoRegistrar::RegisterDiscovered();
         aSdk->logger->Info(aHandle, "CyberM has loaded");
-        aSdk->logger->Info(aHandle, GetCommandLineA());
         // TODO: Get rid of it or fix the hwnd lookup but maybe also the timing.
         // SetWindowText(GetActiveWindow(), "Cyber-M v0.0.1 - (c) 2023 MeFisto94");
         break;
