@@ -202,6 +202,12 @@ void NetworkGameSystem::SetEntityPosition(const RED4ext::ent::EntityID entityId,
         // {
         //     SDK->logger->Warn(PLUGIN, "Failed to teleport");
         // }
+
+        // Try: scriptInterface.PushAnimationEvent(n"Jump");
+        // if (!Red::CallVirtual(entity.value(), "PushAnimationEvent", "Jump"))
+        // {
+        //     SDK->logger->Info(PLUGIN, "Could not push jump event.");
+        // }
     } else
     {
         SDK->logger->Warn(PLUGIN, "Cannot SetEntityPosition, because the entity hasn't been found");

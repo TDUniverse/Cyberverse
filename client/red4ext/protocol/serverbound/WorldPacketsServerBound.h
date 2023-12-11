@@ -17,7 +17,8 @@ struct PlayerJoinWorld {
 
 enum PlayerAction
 {
-    eACTION_JUMP
+    eACTION_JUMP,
+    eACTION_RANGED_ATTACK,
 };
 
 struct PlayerActionTracked
