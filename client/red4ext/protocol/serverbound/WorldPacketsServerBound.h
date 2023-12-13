@@ -4,9 +4,7 @@
 #include "EMessageTypeServerbound.h"
 
 struct PlayerJoinWorld {
-    float position_x;
-    float position_y;
-    float position_z;
+    Vector3 position;
 
     inline static void FillMessageFrame(MessageFrame& frame)
     {
@@ -15,7 +13,7 @@ struct PlayerJoinWorld {
     }
 };
 
-enum PlayerAction
+enum PlayerAction: uint8_t
 {
     eACTION_JUMP,
     eACTION_RANGED_ATTACK,

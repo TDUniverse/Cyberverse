@@ -409,9 +409,7 @@ bool NetworkGameSystem::OnGameRestored()
     SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f, %f)", position.X, position.Y, position.Z, position.W);
 
     PlayerJoinWorld join_packet = {};
-    join_packet.position_x = position.X;
-    join_packet.position_y = position.Y;
-    join_packet.position_z = position.Z;
+    join_packet.position = { position.X, position.Y, position.Z };
 
     // TODO: Maybe we could manage this singleton access better? But then, the Game's GameSystem Container is the owner
     // of "this"
