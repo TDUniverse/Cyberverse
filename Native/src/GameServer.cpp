@@ -24,16 +24,15 @@ bool GameServer::Initialize()
     return true;
 }
 
-static void SteamNetConnectionStatusChangedCallback( SteamNetConnectionStatusChangedCallback_t *pInfo)
+static void SteamNetConnectionStatusChangedCallback(SteamNetConnectionStatusChangedCallback_t *pInfo)
 {
     printf("Connection Status Changed (%d): %s\n", pInfo->m_info.m_eState, pInfo->m_info.m_szEndDebug);
-    SINGLETON_GAMESERVER.OnConnectionStatusChanged(pInfo);
+    SINGLETON_GAMESERVER->OnConnectionStatusChanged(pInfo);
 }
 
 bool GameServer::ListenOn(const uint16_t nPort)
 {
     m_pInterface = SteamNetworkingSockets();
-
     if (m_pInterface == nullptr)
     {
         fprintf(stderr, "Failed to initialize the networking library\n");
@@ -43,6 +42,10 @@ bool GameServer::ListenOn(const uint16_t nPort)
     SteamNetworkingIPAddr serverLocalAddr = {};
     serverLocalAddr.Clear();
     serverLocalAddr.m_port = nPort;
+
+    // SteamNetConnectionStatusChangedCallback needs a singleton to get back to this instance, so we're overwriting it (for now)
+    // maybe there's a better way like a dynamic jump table that just pushes ecx to a static value?
+    SINGLETON_GAMESERVER = this;
 
     SteamNetworkingConfigValue_t opt = {};
     opt.SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged,
@@ -65,10 +68,8 @@ bool GameServer::ListenOn(const uint16_t nPort)
     return true;
 }
 
-void GameServer::OnConnectionStatusChanged(const SteamNetConnectionStatusChangedCallback_t* pInfo)
+void GameServer::OnConnectionStatusChanged(const SteamNetConnectionStatusChangedCallback_t* pInfo) const
 {
-    char temp[1024];
-
     // What's the state of the connection?
     switch ( pInfo->m_info.m_eState )
     {
@@ -274,11 +275,11 @@ void GameServer::PollIncomingMessages()
             return;
         }
 
-        // We ignore the movement packet. This is not the best logging anyway.
-        if (pIncomingMsg->m_cbSize != 20)
-        {
-            printf("Received a packet with %d bytes\n", pIncomingMsg->m_cbSize);
-        }
+        // TODO: Logging on C# side if really need to be
+        // if (pIncomingMsg->m_cbSize != 20)
+        // {
+        //     printf("Received a packet with %d bytes\n", pIncomingMsg->m_cbSize);
+        // }
 
         auto [data, in] = zpp::bits::data_in();
         const auto begin = (std::byte*)pIncomingMsg->GetData();
@@ -292,91 +293,83 @@ void GameServer::PollIncomingMessages()
             continue;
         }
 
-        // TODO: This should both be more generic probably _AND_ we need to consider how we want to hand this off to C#, given that they may want to control _all_ packet logic.
-        // This however depends on how flexible and moddable we want our, e.g. auth handling, to be.
+        // TODO: This should both be more generic probably _AND_ we need to consider how we want to hand this off to C#,
+        // given that they may want to control _all_ packet logic. This however depends on how flexible and moddable we
+        // want our, e.g. auth handling, to be.
         switch (frame.message_type)
         {
-            case EINIT_AUTH:
+        case EINIT_AUTH:
+        {
+            auto init_auth = InitAuthServerBound();
+            if (zpp::bits::failure(in(init_auth)))
             {
-                InitAuthServerBound init_auth = {};
-                if (zpp::bits::failure(in(init_auth)))
-                {
-                    fprintf(stderr, "Faulty packet: InitAuthServerBound\n");
-                    pIncomingMsg->Release();
-                    continue;
-                }
-                printf("Auth request from %s for protocol %d\n", init_auth.username.c_str(), init_auth.protocol_version);
-
-                AuthResultClientBound result_packet = {};
-
-                if (init_auth.protocol_version != PROTOCOL_VERSION_CURRENT)
-                {
-                    result_packet.auth_result = EAuthResult_VersionMismatch;
-                } else
-                {
-                    const auto validation = m_authController.ValidateUser(init_auth.username);
-                    result_packet.auth_result = validation ? EAuthResult_Ok : EAuthResult_ValidationFailed;
-                }
-
-                EnqueueMessage(pIncomingMsg->m_conn, 0, result_packet);
+                fprintf(stderr, "Faulty packet: InitAuthServerBound\n");
+                pIncomingMsg->Release();
+                continue;
             }
-            break;
 
-            case EPLAYER_JOIN_WORLD:
+            // extra pain due to C# ABI
+            auto init_auth_abi = new InitAuthServerBoundCSharp(init_auth);
+            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, reinterpret_cast<uintptr_t>(init_auth_abi));
+        }
+        break;
+
+        case EPLAYER_JOIN_WORLD:
+        {
+            PlayerJoinWorld player_join = {};
+            if (zpp::bits::failure(in(player_join)))
             {
-                PlayerJoinWorld player_join = {};
-                if (zpp::bits::failure(in(player_join)))
-                {
-                    fprintf(stderr, "Faulty packet: PlayerJoinWorld\n");
-                    pIncomingMsg->Release();
-                    continue;
-                }
-                printf("Player joined the world at (%f, %f, %f)\n", player_join.position_x, player_join.position_y, player_join.position_z);
+                fprintf(stderr, "Faulty packet: PlayerJoinWorld\n");
+                pIncomingMsg->Release();
+                continue;
             }
-            break;
 
-            case ePlayerActionTracked:
+            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_join);
+        }
+        break;
+
+        case ePlayerActionTracked:
+        {
+            PlayerActionTracked action_tracked = {};
+            if (zpp::bits::failure(in(action_tracked)))
             {
-                PlayerActionTracked action_tracked = {};
-                if (zpp::bits::failure(in(action_tracked)))
-                {
-                    fprintf(stderr, "Faulty packet: PlayerActionTracked\n");
-                    pIncomingMsg->Release();
-                    continue;
-                }
-
-                if (action_tracked.action == eACTION_JUMP)
-                {
-                    // Character.Panam
-                    const SpawnEntity spawn_entity = { 0, "Character.Judy", action_tracked.worldTransform };
-                    EnqueueMessage(pIncomingMsg->m_conn, 1, spawn_entity);
-                }
+                fprintf(stderr, "Faulty packet: PlayerActionTracked\n");
+                pIncomingMsg->Release();
+                continue;
             }
-            break;
 
-            case ePlayerPositionUpdate:
+            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, action_tracked);
+        }
+        break;
+
+        case ePlayerPositionUpdate:
+        {
+            PlayerPositionUpdate position_update = {};
+            if (zpp::bits::failure(in(position_update)))
             {
-                PlayerPositionUpdate position_update = {};
-                if (zpp::bits::failure(in(position_update)))
-                {
-                    fprintf(stderr, "Faulty packet: PlayerPositionUpdate\n");
-                    pIncomingMsg->Release();
-                    continue;
-                }
-
-                // TODO: Implement differently, don't teleport.
-                const TeleportEntity teleport_entity = { 0, position_update.worldTransform, position_update.yaw };
-                EnqueueMessage(pIncomingMsg->m_conn, 1, teleport_entity);
+                fprintf(stderr, "Faulty packet: PlayerPositionUpdate\n");
+                pIncomingMsg->Release();
+                continue;
             }
-            break;
 
-            default:
-                printf("Message Type: %d\n", frame.message_type);
-                break;
+            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, position_update);
+        }
+        break;
+
+        default:
+            printf("Message Type: %d\n", frame.message_type);
+            break;
         }
 
         pIncomingMsg->Release();
     }
+}
+
+void GameServer::Update(float deltaTime)
+{
+    ProcessSendQueue();
+    PollIncomingMessages();
+    PollConnectionStateChanges();
 }
 
 void GameServer::RunBlocking()
@@ -384,15 +377,87 @@ void GameServer::RunBlocking()
     const auto g_bQuit = false;
     while ( !g_bQuit )
     {
-        PollIncomingMessages();
-        PollConnectionStateChanges();
-        //PollLocalUserInput();
+        Update(0.1f);
         std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
     }
 }
+
 void GameServer::Destroy()
 {
     GameNetworkingSockets_Kill();
 }
 
-GameServer SINGLETON_GAMESERVER = {};
+Message GameServer::PollRecvQueue() const
+{
+    if (dll_recv_queue->empty())
+    {
+        return {};
+    }
+
+    const auto val = dll_recv_queue->front();
+    dll_recv_queue->pop();
+    return val;
+}
+
+template<typename T>
+void GameServer::AddToRecvQueue(const uint16_t message_type, const uint32 connectionId, const uint8_t channelId,
+                                const T& data) const
+{
+    // Helper template as we can only deserialize into stack based structs and we then copy the packet into a long lived ptr.
+    const auto buf = malloc(sizeof(T));
+    memcpy(buf, (void*)&data, sizeof(T));
+    AddToRecvQueue(message_type, connectionId, channelId, reinterpret_cast<uintptr_t>(buf));
+}
+
+void GameServer::AddToRecvQueue(const uint16_t message_type, const uint32 connectionId, const uint8_t channelId,
+                                const uintptr_t data) const
+{
+    const auto message = Message{channelId, message_type, connectionId, data};
+    dll_recv_queue->emplace(message);
+}
+
+void GameServer::EnqueueSendQueue(Message msg) const
+{
+    dll_send_queue->emplace(msg);
+}
+
+void GameServer::ProcessSendQueue()
+{
+    if (dll_send_queue->empty())
+    {
+        return;
+    }
+
+    const auto val = dll_send_queue->front();
+    dll_send_queue->pop();
+
+    switch (val.messageType)
+    {
+        case EINIT_AUTH_RESULT:
+        {
+            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<AuthResultClientBound*>(val.data));
+        }
+            break;
+        case eSpawnEntity:
+        {
+            const auto ptrToSpawnEntity = reinterpret_cast<SpawnEntityCSharp*>(val.data);
+            // Manual construction as zpp::bits really didn't like an explicit copying constructor
+            const auto spawnEntity = SpawnEntity(ptrToSpawnEntity->networkedEntityId, std::string(ptrToSpawnEntity->recordId, 1024), ptrToSpawnEntity->spawnPosition);
+            EnqueueMessage(val.connectionId, val.channelId, spawnEntity);
+        }
+            break;
+        case eTeleportEntity:
+        {
+            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<TeleportEntity*>(val.data));
+        }
+            break;
+
+
+        default:
+            printf("Unknown messageType: %d\n", val.messageType);
+    }
+
+    free(reinterpret_cast<void*>(val.data));
+}
+
+GameServer *SINGLETON_GAMESERVER = nullptr;

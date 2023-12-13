@@ -1,11 +1,12 @@
-#add_library(${CMAKE_PROJECT_NAME} SHARED "")
-add_executable(${CMAKE_PROJECT_NAME})
+add_library(${CMAKE_PROJECT_NAME} SHARED "")
+#add_executable(${CMAKE_PROJECT_NAME})
 
 set(PROJECT_HEADER_FILES
   Main.h
   NetworkGameSystem.h
         GameServer.h
         AuthController.h
+        api/message.h
 )
 
 set(PROJECT_SRC_FILES
@@ -13,6 +14,7 @@ set(PROJECT_SRC_FILES
   NetworkGameSystem.cpp
         GameServer.cpp
         AuthController.cpp
+        api/dllmain.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${PROJECT_HEADER_FILES} ${PROJECT_SRC_FILES})

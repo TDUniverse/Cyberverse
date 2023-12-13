@@ -8,13 +8,14 @@ int main()
 {
     printf("Starting CyberM Server 0.0.1 (c) 2023 MeFisto94\n");
 
-    if (!SINGLETON_GAMESERVER.Initialize())
+    if (!GameServer::Initialize())
     {
         printf("Error when initializing server!\n");
         return 1;
     }
 
-    SINGLETON_GAMESERVER.ListenOn(1337);
-    SINGLETON_GAMESERVER.RunBlocking();
-    SINGLETON_GAMESERVER.Destroy();
+    const auto gameserver = new GameServer();
+    gameserver->ListenOn(1337);
+    gameserver->RunBlocking();
+    GameServer::Destroy();
 }
