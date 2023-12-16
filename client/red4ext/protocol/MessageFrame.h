@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 constexpr uint32_t PROTOCOL_VERSION_CURRENT = 0x0;
 
 struct MessageFrame {

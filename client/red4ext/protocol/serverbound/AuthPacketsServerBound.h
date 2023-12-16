@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <string>
+
 #include "../MessageFrame.h"
 #include "EMessageTypeServerbound.h"
 
@@ -26,7 +29,8 @@ struct InitAuthServerBoundCSharp
 
     explicit InitAuthServerBoundCSharp(const InitAuthServerBound& other)
     {
-        memcpy_s(username, 255, other.username.c_str(), other.username.length());
+        const auto size = std::min(static_cast<size_t>(255), other.username.length());
+        std::memcpy(username, other.username.c_str(), size);
         protocol_version = other.protocol_version;
     }
 };

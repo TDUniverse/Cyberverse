@@ -16,7 +16,7 @@ struct InterpolationData {
     float durationSeconds;
     float timeElapsed;
 
-    [[nodiscard]] inline float CalcInterpolationProgress(float deltaTime) noexcept
+    [[nodiscard]] inline float CalcInterpolationProgress(const float deltaTime) noexcept
     {
         // const std::chrono::time_point<std::chrono::system_clock, std::chrono::duration<float>> now = std::chrono::system_clock::now();
         // const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::duration<float>>(endTime - now);
