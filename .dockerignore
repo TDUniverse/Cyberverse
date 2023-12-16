@@ -1,0 +1,6 @@
+.git
+Native/cmake-build-debug
+Native/vcpkg
+Native/vcpkg_installed
+Managed/obj
+Managed/bin
