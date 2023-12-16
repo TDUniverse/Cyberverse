@@ -21,5 +21,7 @@ find_package(GameNetworkingSockets CONFIG REQUIRED)
 add_library(protocol INTERFACE)
 target_include_directories(protocol INTERFACE "../RED4extModule/protocol")
 
+add_compile_definitions(CYBERM_COMPILING)
+
 # Include the main project.
 add_subdirectory(src)

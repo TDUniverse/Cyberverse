@@ -1,7 +1,6 @@
 #include "GameServer.h"
 
 #include <cassert>
-#include <corecrt_wstdio.h>
 #include <cstdio>
 #include <steam/steamnetworkingsockets.h>
 #include <thread>
@@ -423,16 +422,13 @@ void GameServer::EnqueueSendQueue(Message msg) const
 
 void GameServer::ProcessSendQueue()
 {
-    if (dll_send_queue->empty())
+    while (!dll_send_queue->empty())
     {
-        return;
-    }
+        const auto val = dll_send_queue->front();
+        dll_send_queue->pop();
 
-    const auto val = dll_send_queue->front();
-    dll_send_queue->pop();
-
-    switch (val.messageType)
-    {
+        switch (val.messageType)
+        {
         case EINIT_AUTH_RESULT:
         {
             EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<AuthResultClientBound*>(val.data));
@@ -455,9 +451,10 @@ void GameServer::ProcessSendQueue()
 
         default:
             printf("Unknown messageType: %d\n", val.messageType);
-    }
+        }
 
-    free(reinterpret_cast<void*>(val.data));
+        free(reinterpret_cast<void*>(val.data));
+    }
 }
 
 GameServer *SINGLETON_GAMESERVER = nullptr;
