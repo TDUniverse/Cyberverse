@@ -1,8 +1,8 @@
 [submodule "Native/deps/zpp_bits"]
-	path = Native/deps/zpp_bits
+	path = server/Native/deps/zpp_bits/zpp_bits
 	url = https://github.com/eyalz800/zpp_bits
 [submodule "Native/deps/GameNetworkingSockets"]
-	path = Native/deps/GameNetworkingSockets
+	path = server/Native/deps/GameNetworkingSockets
 	url = https://github.com/ValveSoftware/GameNetworkingSockets.git
 [submodule "client/red4ext/deps/red4ext.sdk"]
 	path = client/red4ext/deps/red4ext.sdk

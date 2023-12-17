@@ -1,8 +1,7 @@
-﻿using CyberM.Server.NativeLayer.Protocol.Common;
-using CyberM.Server.Types;
+﻿namespace CyberM.Server;
 
-namespace CyberM.Server;
-
+using NativeLayer.Protocol.Common;
+using Types;
 using NativeLayer.Protocol.Clientbound;
 using NativeLayer.Protocol.Serverbound;
 
