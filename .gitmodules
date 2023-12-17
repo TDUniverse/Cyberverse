@@ -16,3 +16,6 @@
 [submodule "client/red4ext/deps/red-lib"]
 	path = client/red4ext/deps/red-lib
 	url = https://github.com/psiberx/cp2077-red-lib
+[submodule "server/Native/deps/zpp_bits"]
+	path = server/Native/deps/zpp_bits
+	url = https://github.com/eyalz800/zpp_bits
