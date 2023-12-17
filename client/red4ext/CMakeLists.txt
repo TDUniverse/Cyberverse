@@ -37,7 +37,7 @@ add_subdirectory(deps/red-lib)
 
 # Include our protocol headers
 add_library(protocol INTERFACE)
-target_include_directories(protocol INTERFACE "protocol")
+target_include_directories(protocol INTERFACE "../../shared/protocol")
 
 # Include the main project.
 add_subdirectory(src)

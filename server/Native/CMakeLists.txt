@@ -19,7 +19,7 @@ find_package(GameNetworkingSockets CONFIG REQUIRED)
 
 # Include our protocol headers (shared with the client)
 add_library(protocol INTERFACE)
-target_include_directories(protocol INTERFACE "../RED4extModule/protocol")
+target_include_directories(protocol INTERFACE "../../shared/protocol")
 
 add_compile_definitions(CYBERM_COMPILING)
 
