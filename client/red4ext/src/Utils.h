@@ -6,6 +6,7 @@
 #include "RED4ext/Scripting/Natives/Generated/cp/PlayerSystem.hpp"
 #include "RED4ext/Scripting/Natives/Generated/ent/EntityID.hpp"
 #include "RED4ext/Scripting/Natives/Generated/game/Object.hpp"
+#include "RED4ext/Scripting/Natives/Generated/vehicle/BaseObject.hpp"
 #include "RedLib.hpp"
 
 namespace CyberM::Utils
@@ -96,6 +97,13 @@ namespace CyberM::Utils
         const auto y = from.Y + (to.Y - from.Y) * t;
         const auto z = from.Z + (to.Z - from.Z) * t;
         return RED4ext::Vector3(x, y, z);
+    }
+
+    inline RED4ext::TweakDBID VehicleObject_GetRecordID(const RED4ext::Handle<RED4ext::VehicleObject>& vehicle)
+    {
+        RED4ext::TweakDBID dbId = {};
+        Red::CallVirtual(vehicle, "GetRecordID", dbId);
+        return dbId;
     }
 }
 

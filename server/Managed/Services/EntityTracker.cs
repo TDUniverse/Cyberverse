@@ -49,6 +49,7 @@ public class EntityTracker
     {
         foreach (var (connectionId, player) in _server.PlayerService.ConnectedPlayers)
         {
+            // TODO: there may be more than one networkedEntity related to the player, so entities get a parentOwner reference.
             // Don't track yourself.
             if (player.NetworkedEntityId != entity.NetworkedEntityId)
             {

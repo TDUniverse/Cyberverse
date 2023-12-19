@@ -14,4 +14,9 @@ public struct Vector3
     {
         return (x - b.x) * (x - b.x) + (y - b.y) * (y - b.y) + (z - b.z) * (z - b.z);
     }
+
+    public override string ToString()
+    {
+        return $"({x}, {y}, {z})";
+    }
 }

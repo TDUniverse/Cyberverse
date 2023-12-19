@@ -7,4 +7,5 @@ enum EMessageTypeServerbound: uint16_t {
     EPLAYER_JOIN_WORLD = 1,
     ePlayerActionTracked = 2,
     ePlayerPositionUpdate = 3,
+    ePlayerSpawnCar = 4,
 };

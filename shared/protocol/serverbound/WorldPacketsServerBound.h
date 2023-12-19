@@ -45,3 +45,16 @@ struct PlayerPositionUpdate
         frame.channel_id = 1; // TODO
     }
 };
+
+// TODO: Hook "call player car", then it's just a matter of tracking NPC cars.
+struct PlayerSpawnCar {
+    Vector3 worldTransform;
+    float yaw;
+    uint64_t recordId;
+
+    inline static void FillMessageFrame(MessageFrame& frame)
+    {
+        frame.message_type = ePlayerSpawnCar;
+        frame.channel_id = 0; // TODO
+    }
+};

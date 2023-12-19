@@ -1,5 +1,6 @@
 ﻿using CyberM.Server.NativeLayer.Protocol.Serverbound;
 using CyberM.Server.Services;
+using CyberM.Server.Types;
 
 namespace CyberM.Server.PacketHandling;
 
@@ -7,6 +8,7 @@ public class PlayerPacketHandler
 {
     private readonly TypedPacketHandler<PlayerJoinWorld> _playerJoinHandler;
     private readonly TypedPacketHandler<PlayerPositionUpdate> _playerMoveHandler;
+    private readonly TypedPacketHandler<PlayerSpawnCar> _playerSpawnCarHandler;
     private EntityTracker? _tracker = null;
     private PlayerService? _players = null;
 
@@ -14,6 +16,7 @@ public class PlayerPacketHandler
     {
         _playerJoinHandler = new TypedPacketHandler<PlayerJoinWorld>(HandleJoinWorld);
         _playerMoveHandler = new TypedPacketHandler<PlayerPositionUpdate>(HandlePositionUpdate);
+        _playerSpawnCarHandler = new TypedPacketHandler<PlayerSpawnCar>(HandleSpawnCar);
     }
 
     protected void HandleJoinWorld(GameServer server, EMessageTypeServerbound messageType, byte channelId, uint connectionId, PlayerJoinWorld content)
@@ -88,6 +91,26 @@ public class PlayerPacketHandler
         _tracker!.UpdateTrackingFor(entity);
     }
 
+    protected void HandleSpawnCar(GameServer server, EMessageTypeServerbound messageType, byte channelId,
+        uint connectionId, PlayerSpawnCar content)
+    {
+        var hash = RecordIdUtils.RecordIdToCrcHash(content.recordId);
+        var len = RecordIdUtils.RecordIdToNameLength(content.recordId);
+        
+        Console.WriteLine($"Player spawned a {hash} [{len}] at {content.worldTransform}");
+
+        if (hash == 1879236272)
+        {
+            Console.WriteLine("Car is Vehicle.v_standard2_archer_hella_player");
+
+            var entity = server.EntityService.CreateEntity("Vehicle.v_standard2_archer_hella_player");
+            entity.WorldTransform = content.worldTransform; // Spawn the entity at the right spot already
+            entity.Yaw = content.yaw;
+
+            _tracker!.UpdateTrackingFor(entity);
+        }
+    }
+
     public void RegisterOnServer(GameServer server)
     {
         _tracker = server.EntityTracker; // TODO: Service registry or even using DI
@@ -95,5 +118,6 @@ public class PlayerPacketHandler
         
         server.AddPacketHandler(EMessageTypeServerbound.PlayerJoinWorld, _playerJoinHandler.HandlePacket);
         server.AddPacketHandler(EMessageTypeServerbound.PlayerPositionUpdate, _playerMoveHandler.HandlePacket);
+        server.AddPacketHandler(EMessageTypeServerbound.PlayerSpawnCar, _playerSpawnCarHandler.HandlePacket);
     }
 }

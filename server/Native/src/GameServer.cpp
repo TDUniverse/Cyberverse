@@ -274,12 +274,6 @@ void GameServer::PollIncomingMessages()
             return;
         }
 
-        // TODO: Logging on C# side if really need to be
-        // if (pIncomingMsg->m_cbSize != 20)
-        // {
-        //     printf("Received a packet with %d bytes\n", pIncomingMsg->m_cbSize);
-        // }
-
         auto [data, in] = zpp::bits::data_in();
         const auto begin = (std::byte*)pIncomingMsg->GetData();
         data.assign(begin, begin + pIncomingMsg->GetSize());
@@ -295,6 +289,9 @@ void GameServer::PollIncomingMessages()
         // TODO: This should both be more generic probably _AND_ we need to consider how we want to hand this off to C#,
         // given that they may want to control _all_ packet logic. This however depends on how flexible and moddable we
         // want our, e.g. auth handling, to be.
+        // Another problem is that we have to deserialize the packets anyway, we could use macros for that at least,
+        // but it still requires native changes to add a new packet type. Especially for packets that aren't represented
+        // like that on the CSharp side (e.g. strings)
         switch (frame.message_type)
         {
         case EINIT_AUTH:
@@ -352,6 +349,20 @@ void GameServer::PollIncomingMessages()
             }
 
             AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, position_update);
+        }
+        break;
+
+        case ePlayerSpawnCar:
+        {
+            PlayerSpawnCar player_spawn_car = {};
+            if (zpp::bits::failure(in(player_spawn_car)))
+            {
+                fprintf(stderr, "Faulty packet: PlayerSpawnCar\n");
+                pIncomingMsg->Release();
+                continue;
+            }
+
+            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_spawn_car);
         }
         break;
 

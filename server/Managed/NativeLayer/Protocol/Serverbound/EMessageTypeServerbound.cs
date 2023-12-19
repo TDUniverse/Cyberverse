@@ -6,4 +6,5 @@ public enum EMessageTypeServerbound: ushort
     PlayerJoinWorld = 1,
     PlayerActionTracked = 2,
     PlayerPositionUpdate = 3,
+    PlayerSpawnCar = 4,
 }

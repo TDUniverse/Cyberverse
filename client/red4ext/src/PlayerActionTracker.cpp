@@ -3,7 +3,9 @@
 #include "RED4ext/Api/Sdk.hpp"
 
 #include "NetworkGameSystem.h"
+#include "RED4ext/Scripting/Natives/Generated/game/MountEventData.hpp"
 #include "RED4ext/Scripting/Natives/Generated/game/damage/AttackData.hpp"
+#include "RED4ext/Scripting/Natives/Generated/game/mounting/MountingRequest.hpp"
 #include "Utils.h"
 
 #include <serverbound/WorldPacketsServerBound.h>
@@ -59,4 +61,45 @@ void PlayerActionTracker::OnHit(RED4ext::Handle<RED4ext::GameObject> gameObject,
                                 RED4ext::Handle<RED4ext::gameHitEvent> event)
 {
     SDK->logger->InfoF(PLUGIN, "OnHit! %d", event->attackData->attackType);
+}
+
+void PlayerActionTracker::OnMounting(RED4ext::Handle<RED4ext::game::mounting::MountingEvent> event)
+{
+    if (event->relationship.otherMountableType != RED4ext::game::MountingObjectType::Vehicle)
+    {
+        // mountingSubType would tell us whether bike or car.
+        return;
+    }
+
+    if (event->relationship.relationshipType != RED4ext::game::MountingRelationshipType::Parent)
+    {
+        // If the car mounts us, do nothing
+        return;
+    }
+
+    if (event->relationship.otherObject.Expired())
+    {
+        SDK->logger->Warn(PLUGIN, "Cannot Process PlayerActionTracker::OnMounting as the vehicle's weak ref has expried");
+        return;
+    }
+
+    // Keep alive as long as the derived vehicleInstance
+    const auto strongLock = event->relationship.otherObject.Lock();
+    const RED4ext::game::Object* ptr = strongLock; // TODO: if you figure out how to inline that, you're welcome to do so.
+    const auto vehicleInstance = RED4ext::Handle((RED4ext::VehicleObject*)ptr);
+
+    // TODO: vehicles.swift, there is VehicleObject.GetRecordID(), but there is also GameObject::GetTDBID(go) which is more generic and handles casting,
+    // so it works for puppets, devices _and_ vehicles. Question is if we should here just implement both so we can avoid casting and misleading?
+
+    const auto recordId = CyberM::Utils::VehicleObject_GetRecordID(vehicleInstance);
+    const auto [X, Y, Z, W] = CyberM::Utils::Entity_GetWorldPosition(vehicleInstance);
+    const auto orientation = CyberM::Utils::Entity_GetWorldOrientation(vehicleInstance);
+    const auto [Roll, Pitch, Yaw] = CyberM::Utils::Quaternion_ToEulerAngles(orientation);
+
+    PlayerSpawnCar spawnCar = {};
+    spawnCar.recordId = recordId.value;
+    spawnCar.worldTransform = Vector3 { X, Y, Z };
+    spawnCar.yaw = Yaw;
+
+    Red::GetGameSystem<NetworkGameSystem>()->EnqueueMessage(0, spawnCar);
 }

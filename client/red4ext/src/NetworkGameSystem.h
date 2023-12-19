@@ -86,5 +86,6 @@ RTTI_DEFINE_CLASS(NetworkGameSystem, {
 //  about PlayerActionTracked. Maybe we could also inline the whole EnqueueMessage code, then it will be emited into the
 //  relevant caller CU (but that may be more than one for the same packet, making template hell even worse).
 template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerActionTracked msg);
+template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerSpawnCar msg);
 
 #endif //NETWORKMANAGERCONTROLLER_H
