@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using CyberM.Server.PacketHandling;
 
 namespace CyberM.Server;
 
@@ -8,6 +9,8 @@ public class Program
     {
         Console.WriteLine("Starting CyberM Server 0.0.1 (c) 2023 MeFisto94");
         var server = new GameServer(1337);
+        AddTypicalPacketHandlers(server);
+        
         var quit = false;
 
         while (!quit)
@@ -21,5 +24,12 @@ public class Program
         }
 
         Native.destroy_gameserver();
+    }
+
+    private static void AddTypicalPacketHandlers(GameServer server)
+    {
+        // TODO: Store the auth handler somewhere
+        new AuthPacketHandler().RegisterOnServer(server);
+        new PlayerPacketHandler().RegisterOnServer(server);
     }
 }

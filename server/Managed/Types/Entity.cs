@@ -3,12 +3,21 @@
 namespace CyberM.Server.Types;
 
 /// <summary>
-/// Don't overuse this class, it's just a simple dataclass, we want to handle complex data in a different way
+/// Don't overuse this class, it's just a simple dataclass, we want to handle complex data in a different way.
+///
+/// Technically the only thing an entity is is it's entityId, both the recordId (which is the game asset for it and
+/// the position are contextually relevant only and could be different maps based on the entityId).
 /// </summary>
 public class Entity
 {
-    public ulong networkedEntityId;
-    public string recordId;
-    public Vector3 worldTransform;
-    public float yaw;
+    public readonly ulong NetworkedEntityId;
+    public string RecordId;
+    public Vector3 WorldTransform;
+    public float Yaw;
+
+    public Entity(ulong entityId, string recordId)
+    {
+        NetworkedEntityId = entityId;
+        RecordId = recordId;
+    }
 }

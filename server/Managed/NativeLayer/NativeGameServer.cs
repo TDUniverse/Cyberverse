@@ -1,4 +1,4 @@
-﻿namespace CyberM.Server;
+﻿namespace CyberM.Server.NativeLayer;
 
 public class NativeGameServer
 {
