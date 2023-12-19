@@ -190,18 +190,19 @@ void NetworkGameSystem::SetEntityPosition(const RED4ext::ent::EntityID entityId,
 
     if (entity.has_value())
     {
+        // TODO: Find out if this is an NPCPuppet...
         // AI
         RED4ext::Handle<RED4ext::AICommand> commandRef;
         Red::CallVirtual(this, "TeleportPuppet", commandRef, entity.value(), worldPosition, yaw);
         m_LastTeleportCommand[entityId] = commandRef;
 
         // random game objects
-        // RED4ext::EulerAngles angles = { 0.0f, 0.0f, yaw };
-        // const auto teleportFacility = Red::GetGameSystem<RED4ext::TeleportationFacility>();
-        // if (!Red::CallVirtual(teleportFacility, "Teleport", entity.value() /*"game object"*/, worldPosition, angles))
-        // {
-        //     SDK->logger->Warn(PLUGIN, "Failed to teleport");
-        // }
+        RED4ext::EulerAngles angles = { 0.0f, 0.0f, yaw };
+        const auto teleportFacility = Red::GetGameSystem<RED4ext::TeleportationFacility>();
+        if (!Red::CallVirtual(teleportFacility, "Teleport", entity.value() /*"game object"*/, worldPosition, angles))
+        {
+            SDK->logger->Warn(PLUGIN, "Failed to teleport");
+        }
 
         // Try: scriptInterface.PushAnimationEvent(n"Jump");
         // if (!Red::CallVirtual(entity.value(), "PushAnimationEvent", "Jump"))
