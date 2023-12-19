@@ -448,8 +448,30 @@ void NetworkGameSystem::InterpolatePuppets(const float deltaTime)
         const auto interpolationProgress = std::min(1.0f, interpolator.CalcInterpolationProgress(deltaTime));
         const auto targetDestination = CyberM::Utils::LerpLocal(interpolator.positionSource, interpolator.positionTarget, interpolationProgress);
 
+        auto angleDirection1 = interpolator.rotationTarget - interpolator.rotationSource;
+        auto angleDirection2 = interpolator.rotationSource - interpolator.rotationTarget;
+
+        if (angleDirection1 < 0.0f)
+        {
+            angleDirection1 += 360.0f;
+        }
+
+        if (angleDirection2 < 0.0f)
+        {
+            angleDirection2 += 360.0f;
+        }
+
+        auto actualAngleDistance = 0.0f;
+        if (angleDirection1 < angleDirection2)
+        {
+            actualAngleDistance = angleDirection1;
+        } else
+        {
+            actualAngleDistance = -angleDirection2;
+        }
+
         // TODO: Better interpolation here, e.g. if we go from 5 -> 355°, we should only do 10°, not 350.
-        const float targetYaw = interpolator.rotationSource + interpolationProgress * (interpolator.rotationTarget - interpolator.rotationSource);
+        const float targetYaw = interpolator.rotationSource + interpolationProgress * actualAngleDistance;
         const auto targetDestinationVec4 = CyberM::Utils::Vector3To4(targetDestination); // TODO: Get rid of this function call
         SDK->logger->TraceF(PLUGIN, "Interpolation Progress: %f, yaw: %f. dest (%f, %f, %f)", interpolationProgress, targetYaw, targetDestinationVec4.X, targetDestinationVec4.Y, targetDestinationVec4.Z);
 
