@@ -11,6 +11,10 @@ namespace CyberM.Server.Types;
 public class Entity
 {
     public readonly ulong NetworkedEntityId;
+    /// <summary>
+    /// 0 is unowned, could be server controlled.
+    /// </summary>
+    public ulong NetworkIdOwner;
     public string RecordId;
     public Vector3 WorldTransform;
     public float Yaw;

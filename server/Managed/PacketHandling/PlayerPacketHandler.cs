@@ -29,7 +29,7 @@ public class PlayerPacketHandler
             var recordId = new Random().NextSingle() > 0.5f ? "Character.Judy" : "Character.Panam";
             var entity = server.EntityService.CreateEntity(recordId);
             entity.WorldTransform = content.position; // Spawn the entity at the right spot already
-            player.NetworkedEntityId = entity.NetworkedEntityId; // Inform the player about it's new entityId
+            entity.NetworkIdOwner = player.ConnectionId;
                 
             // Since we only call the tracking for moved entities, force sync every entity to that player:
             _tracker!.InitialSpawnForPlayer(player);
@@ -57,38 +57,26 @@ public class PlayerPacketHandler
         //
         // EnqueueMessage(outputMessage);
 
-        if (!_players!.ConnectedPlayers.TryGetValue(connectionId, out var player))
+        var playerEntities =
+            server.EntityService.SpawnedEntities.Values.Where(tty => tty.NetworkIdOwner == connectionId);
+        foreach (var entity in playerEntities)
         {
-            // ??
-            return;
+            //Console.WriteLine($"Move {player.Name} ({player.ConnectionId} / {message.connectionId}) to ({positionUpdate.worldTransform.x}, {positionUpdate.worldTransform.y}, {positionUpdate.worldTransform.z})");
+            
+            // TODO: sometimes the game sends faulty updates to ~0, 3.16, 0.
+            // TODO: This is happening before the savegame has loaded. A better solution is to prevent updating networkEntityIds that are not spawned yet,
+            // because what happens here is that player.NetworkedEntityId is 0 because it has no entity yet, thus moving the old player.
+            // Note: this should already be solved.
+            if (content.worldTransform.z == 0 && content.worldTransform.x == 0.010673523f)
+            {
+                Console.WriteLine("Skipping position update");
+                return;
+            }
+                    
+            entity.WorldTransform = content.worldTransform;
+            entity.Yaw = content.yaw;
+            _tracker!.UpdateTrackingFor(entity);
         }
-
-        if (!player.NetworkedEntityId.HasValue)
-        {
-            // Not spawned yet.
-            return;
-        }
-
-        if (!server.EntityService.SpawnedEntities.TryGetValue(player.NetworkedEntityId.Value, out var entity))
-        {
-            return;
-        }
-        
-        //Console.WriteLine($"Move {player.Name} ({player.ConnectionId} / {message.connectionId}) to ({positionUpdate.worldTransform.x}, {positionUpdate.worldTransform.y}, {positionUpdate.worldTransform.z})");
-        
-        // TODO: sometimes the game sends faulty updates to ~0, 3.16, 0.
-        // TODO: This is happening before the savegame has loaded. A better solution is to prevent updating networkEntityIds that are not spawned yet,
-        // because what happens here is that player.NetworkedEntityId is 0 because it has no entity yet, thus moving the old player.
-        // Note: this should already be solved.
-        if (content.worldTransform.z == 0 && content.worldTransform.x == 0.010673523f)
-        {
-            Console.WriteLine("Skipping position update");
-            return;
-        }
-                
-        entity.WorldTransform = content.worldTransform;
-        entity.Yaw = content.yaw;
-        _tracker!.UpdateTrackingFor(entity);
     }
 
     protected void HandleSpawnCar(GameServer server, EMessageTypeServerbound messageType, byte channelId,
@@ -106,6 +94,7 @@ public class PlayerPacketHandler
             var entity = server.EntityService.CreateEntity("Vehicle.v_standard2_archer_hella_player");
             entity.WorldTransform = content.worldTransform; // Spawn the entity at the right spot already
             entity.Yaw = content.yaw;
+            entity.NetworkIdOwner = connectionId;
 
             _tracker!.UpdateTrackingFor(entity);
         }

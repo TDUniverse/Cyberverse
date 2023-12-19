@@ -49,9 +49,8 @@ public class EntityTracker
     {
         foreach (var (connectionId, player) in _server.PlayerService.ConnectedPlayers)
         {
-            // TODO: there may be more than one networkedEntity related to the player, so entities get a parentOwner reference.
-            // Don't track yourself.
-            if (player.NetworkedEntityId != entity.NetworkedEntityId)
+            // Don't track your own entities.
+            if (entity.NetworkIdOwner != connectionId)
             {
                 UpdateTrackingFor(entity, player);
             }
@@ -60,37 +59,37 @@ public class EntityTracker
 
     public void UpdateTrackingFor(Entity entity, Player player)
     {
-        if (!player.NetworkedEntityId.HasValue ||
-            !_server.EntityService.SpawnedEntities.TryGetValue(player.NetworkedEntityId.Value, out var playerEntity))
+        // TODO: Challenge: Find the entity the player _currently_ wants to control. There could be multiple (e.g. in the car)
+        // TODO: here, it's even more dumb, as we need to find out the camera at some point
+        var playerEntities =
+            _server.EntityService.SpawnedEntities.Values.Where(tty => tty.NetworkIdOwner == player.ConnectionId);
+        foreach (var playerEntity in playerEntities)
         {
-            // Player not spawned at the moment
-            return;
-        }
-        
-        // TODO: Check for out of bounds.
-        var playerPosition = playerEntity.WorldTransform;
-        if (playerPosition.DistanceSquared(entity.WorldTransform) <= 100 * 100)
-        {
-            // OnStartTrackingEntity just skips on already tracked entities, so we can avoid checking that condition
-            // twice and just call it directly.
-            OnStartTrackingEntity(player, entity);
-
-            // TODO: In the future, we may not want to immediately update entities that have been recently spawned,
-            //  because if spawning and updating are different channels, update may arrive before spawning.
-            //  Though, the client should ignore updates for non existing/spawned entities.
-            var teleportEntity = new TeleportEntity
+            // TODO: Check for out of bounds.
+            var playerPosition = playerEntity.WorldTransform;
+            if (playerPosition.DistanceSquared(entity.WorldTransform) <= 100 * 100)
             {
-                networkedEntityId = entity.NetworkedEntityId,
-                targetPosition = entity.WorldTransform,
-                yaw = entity.Yaw
-            };
+                // OnStartTrackingEntity just skips on already tracked entities, so we can avoid checking that condition
+                // twice and just call it directly.
+                OnStartTrackingEntity(player, entity);
 
-            //Console.WriteLine($"[{DateTime.Now.ToLongTimeString()}] Teleporting {entity.networkedEntityId} for {player.ConnectionId}");
-            _server.EnqueueMessage(EMessageTypeClientbound.TeleportEntity, player.ConnectionId, 1, teleportEntity);
-        }
-        else
-        {
-            // TODO: Implement destroying entities.
+                // TODO: In the future, we may not want to immediately update entities that have been recently spawned,
+                //  because if spawning and updating are different channels, update may arrive before spawning.
+                //  Though, the client should ignore updates for non existing/spawned entities.
+                var teleportEntity = new TeleportEntity
+                {
+                    networkedEntityId = entity.NetworkedEntityId,
+                    targetPosition = entity.WorldTransform,
+                    yaw = entity.Yaw
+                };
+
+                //Console.WriteLine($"[{DateTime.Now.ToLongTimeString()}] Teleporting {entity.networkedEntityId} for {player.ConnectionId}");
+                _server.EnqueueMessage(EMessageTypeClientbound.TeleportEntity, player.ConnectionId, 1, teleportEntity);
+            }
+            else
+            {
+                // TODO: Implement destroying entities.
+            }
         }
     }
 
@@ -103,7 +102,7 @@ public class EntityTracker
     {
         foreach (var (id, tty) in _server.EntityService.SpawnedEntities)
         {
-            if (!player.NetworkedEntityId.HasValue && id != player.NetworkedEntityId!.Value)
+            if (tty.NetworkIdOwner != player.ConnectionId)
             {
                 //Console.WriteLine($"Force updating the tracking for the new player for {tty.networkedEntityId} == {key}");
                 UpdateTrackingFor(tty, player);
