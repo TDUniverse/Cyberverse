@@ -14,10 +14,16 @@ public class EntityService
     public readonly Dictionary<ulong, Entity> SpawnedEntities = new();
     private ulong _entityIdCounter = 0u;
     
-    public Entity CreateEntity(string recordId)
+    public Entity CreateEntity(ulong recordId)
     {
         var entity = new Entity(_entityIdCounter++, recordId);
         SpawnedEntities.Add(entity.NetworkedEntityId, entity);
         return entity;
+    }
+    
+    [Obsolete("Try to use recordIds as ulongs directly, where possible")]
+    public Entity CreateEntity(string recordId)
+    {
+        return CreateEntity(RecordIdUtils.ToRecordId(recordId));
     }
 }

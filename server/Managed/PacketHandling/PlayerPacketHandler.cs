@@ -87,17 +87,12 @@ public class PlayerPacketHandler
         
         Console.WriteLine($"Player spawned a {hash} [{len}] at {content.worldTransform}");
 
-        if (hash == 1879236272)
-        {
-            Console.WriteLine("Car is Vehicle.v_standard2_archer_hella_player");
+        var entity = server.EntityService.CreateEntity(content.recordId);
+        entity.WorldTransform = content.worldTransform; // Spawn the entity at the right spot already
+        entity.Yaw = content.yaw;
+        entity.NetworkIdOwner = connectionId;
 
-            var entity = server.EntityService.CreateEntity("Vehicle.v_standard2_archer_hella_player");
-            entity.WorldTransform = content.worldTransform; // Spawn the entity at the right spot already
-            entity.Yaw = content.yaw;
-            entity.NetworkIdOwner = connectionId;
-
-            _tracker!.UpdateTrackingFor(entity);
-        }
+        _tracker!.UpdateTrackingFor(entity);
     }
 
     public void RegisterOnServer(GameServer server)

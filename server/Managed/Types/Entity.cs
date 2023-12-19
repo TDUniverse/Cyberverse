@@ -15,11 +15,11 @@ public class Entity
     /// 0 is unowned, could be server controlled.
     /// </summary>
     public ulong NetworkIdOwner;
-    public string RecordId;
+    public ulong RecordId;
     public Vector3 WorldTransform;
     public float Yaw;
 
-    public Entity(ulong entityId, string recordId)
+    public Entity(ulong entityId, ulong recordId)
     {
         NetworkedEntityId = entityId;
         RecordId = recordId;

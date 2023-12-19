@@ -447,10 +447,7 @@ void GameServer::ProcessSendQueue()
             break;
         case eSpawnEntity:
         {
-            const auto ptrToSpawnEntity = reinterpret_cast<SpawnEntityCSharp*>(val.data);
-            // Manual construction as zpp::bits really didn't like an explicit copying constructor
-            const auto spawnEntity = SpawnEntity(ptrToSpawnEntity->networkedEntityId, std::string(ptrToSpawnEntity->recordId, 1024), ptrToSpawnEntity->spawnPosition);
-            EnqueueMessage(val.connectionId, val.channelId, spawnEntity);
+            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<SpawnEntity*>(val.data));
         }
             break;
         case eTeleportEntity:

@@ -8,8 +8,7 @@ namespace CyberM.Server.NativeLayer.Protocol.Clientbound;
 public struct SpawnEntity: IClientBoundPacket
 {
     public ulong networkedEntityId;
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-    public string recordId;
+    public ulong recordId;
     public Vector3 spawnPosition;
 
     public EMessageTypeClientbound GetMessageType() => EMessageTypeClientbound.SpawnEntity;

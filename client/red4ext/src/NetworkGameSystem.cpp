@@ -304,10 +304,10 @@ void NetworkGameSystem::PollIncomingMessages()
                 continue;
             }
 
-            SDK->logger->InfoF(PLUGIN, "Spawning entity %s", spawn_entity.recordId.c_str());
             // TODO: separate spawning component
             // TODO: SpawnTransientEntity should return the EntityId for a Map<NetworkedEntityId, LocalEntityId>, especially for further updates.
-            RED4ext::TweakDBID entityName = { spawn_entity.recordId.c_str() };
+            SDK->logger->InfoF(PLUGIN, "Spawning entity %llu", spawn_entity.recordId);
+            RED4ext::TweakDBID entityName = { spawn_entity.recordId };
             RED4ext::Vector4 worldPosition = { spawn_entity.spawnPosition.x, spawn_entity.spawnPosition.y, spawn_entity.spawnPosition.z, 1.0 };
             RED4ext::Quaternion worldOrientation = { 0.0, 0.0, 0.0, 1.0 };
 
