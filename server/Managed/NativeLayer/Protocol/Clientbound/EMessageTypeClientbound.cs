@@ -1,4 +1,4 @@
-﻿namespace CyberM.Server.NativeLayer.Protocol.Serverbound;
+﻿namespace Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 
 public enum EMessageTypeClientbound: ushort
 {

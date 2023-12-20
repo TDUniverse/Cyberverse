@@ -1,4 +1,4 @@
-﻿namespace CyberM.Server.Types;
+﻿namespace Cyberverse.Server.Types;
 
 /// <summary>
 /// Don't overuse this class, it's just a simple dataclass, we want to handle complex data in a different way

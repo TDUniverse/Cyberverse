@@ -1,6 +1,6 @@
-﻿using CyberM.Server.Types;
+﻿using Cyberverse.Server.Types;
 
-namespace CyberM.Server.Services;
+namespace Cyberverse.Server.Services;
 
 public class PlayerService
 {

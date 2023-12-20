@@ -1,7 +1,7 @@
 ﻿using System.IO.Hashing;
 using System.Text;
 
-namespace CyberM.Server.Types;
+namespace Cyberverse.Server.Types;
 
 public static class RecordIdUtils
 {

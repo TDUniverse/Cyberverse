@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace CyberM.Server.NativeLayer.Protocol.Serverbound;
+namespace Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 
 [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Ansi)]
 public struct InitAuthServerbound

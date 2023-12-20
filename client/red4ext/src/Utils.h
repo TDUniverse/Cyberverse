@@ -9,7 +9,7 @@
 #include "RED4ext/Scripting/Natives/Generated/vehicle/BaseObject.hpp"
 #include "RedLib.hpp"
 
-namespace CyberM::Utils
+namespace Cyberverse::Utils
 {
     inline RED4ext::Handle<RED4ext::GameObject> GetPlayer()
     {

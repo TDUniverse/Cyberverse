@@ -30,4 +30,4 @@ ENV LD_LIBRARY_PATH .
 USER $APP_UID
 # TODO: Use a non-cringe port.
 EXPOSE 1337
-ENTRYPOINT ["./CyberM.Server"]
+ENTRYPOINT ["./Cyberverse.Server"]

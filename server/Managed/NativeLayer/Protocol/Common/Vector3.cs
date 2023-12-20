@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace CyberM.Server.NativeLayer.Protocol.Common;
+namespace Cyberverse.Server.NativeLayer.Protocol.Common;
 
 [StructLayout(LayoutKind.Sequential, Pack = 8)]
 public struct Vector3

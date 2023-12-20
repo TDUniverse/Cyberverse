@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>12</LangVersion>
+    <RootNamespace>Cyberverse.Server</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

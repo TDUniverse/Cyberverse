@@ -1,13 +1,14 @@
 ﻿using System.Diagnostics;
-using CyberM.Server.PacketHandling;
+using Cyberverse.Server.NativeLayer;
+using Cyberverse.Server.PacketHandling;
 
-namespace CyberM.Server;
+namespace Cyberverse.Server;
 
 public class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Starting CyberM Server 0.0.1 (c) 2023 MeFisto94");
+        Console.WriteLine("Starting Cyberverse Server 0.0.1 (c) 2023 MeFisto94");
         var server = new GameServer(1337);
         AddTypicalPacketHandlers(server);
         

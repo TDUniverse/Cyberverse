@@ -25,5 +25,5 @@ RTTI_DEFINE_CLASS(PlayerActionTracker, {
     RTTI_METHOD(OnShoot);
     RTTI_METHOD(OnHit);
     RTTI_METHOD(OnMounting);
-    RTTI_ALIAS("CyberM.Network.Managers.PlayerActionTracker");
+    RTTI_ALIAS("Cyberverse.Network.Managers.PlayerActionTracker");
 });

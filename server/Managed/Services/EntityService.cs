@@ -1,6 +1,6 @@
-﻿using CyberM.Server.Types;
+﻿using Cyberverse.Server.Types;
 
-namespace CyberM.Server.Services;
+namespace Cyberverse.Server.Services;
 
 /// <summary>
 /// Responsible for keeping track of (owning) entities and sending packets related to them.

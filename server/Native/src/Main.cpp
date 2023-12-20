@@ -6,7 +6,7 @@
 // TODO: This is only for debugging purposes, perspectively we will call into the DLL with a C ABI
 int main()
 {
-    printf("Starting CyberM Server 0.0.1 (c) 2023 MeFisto94\n");
+    printf("Starting Cyberverse Server 0.0.1 (c) 2023 MeFisto94\n");
 
     if (!GameServer::Initialize())
     {

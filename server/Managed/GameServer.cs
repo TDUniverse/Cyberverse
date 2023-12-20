@@ -1,9 +1,9 @@
-﻿using CyberM.Server.NativeLayer;
-using CyberM.Server.NativeLayer.Protocol.Serverbound;
-using CyberM.Server.PacketHandling;
-using CyberM.Server.Services;
+﻿using Cyberverse.Server.NativeLayer;
+using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
+using Cyberverse.Server.PacketHandling;
+using Cyberverse.Server.Services;
 
-namespace CyberM.Server;
+namespace Cyberverse.Server;
 
 public class GameServer: NativeGameServer
 {

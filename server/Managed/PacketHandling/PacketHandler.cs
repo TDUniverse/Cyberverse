@@ -1,6 +1,7 @@
-﻿using CyberM.Server.NativeLayer.Protocol.Serverbound;
+﻿using Cyberverse.Server.NativeLayer;
+using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 
-namespace CyberM.Server.PacketHandling;
+namespace Cyberverse.Server.PacketHandling;
 
 public delegate void HandlePacket(GameServer server, EMessageTypeServerbound messageType, ref Message message);
 

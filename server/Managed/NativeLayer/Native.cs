@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
-using CyberM.Server.NativeLayer.Protocol.Serverbound;
+using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 
-namespace CyberM.Server;
+namespace Cyberverse.Server.NativeLayer;
 
 [StructLayout(LayoutKind.Sequential, Pack = 8)]
 public struct Message
@@ -64,7 +64,7 @@ public struct Message
 
 public static class Native
 {
-    private const string LibraryName = "CyberM.Server.Native";
+    private const string LibraryName = "Cyberverse.Server.Native";
     
     [DllImport(LibraryName)]
     public static extern bool init_gameserver();

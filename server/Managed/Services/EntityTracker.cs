@@ -1,8 +1,8 @@
-﻿using CyberM.Server.NativeLayer.Protocol.Clientbound;
-using CyberM.Server.NativeLayer.Protocol.Serverbound;
-using CyberM.Server.Types;
+﻿using Cyberverse.Server.NativeLayer.Protocol.Clientbound;
+using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
+using Cyberverse.Server.Types;
 
-namespace CyberM.Server.Services;
+namespace Cyberverse.Server.Services;
 
 // TODO: This is just a hacked prototype, this can take any form of complexity and subtle bugs with it (and include dynamic visiblity)
 public class EntityTracker

@@ -1,4 +1,4 @@
-﻿namespace CyberM.Server.NativeLayer.Protocol.Clientbound;
+﻿namespace Cyberverse.Server.NativeLayer.Protocol.Clientbound;
 
 public enum EAuthResult: byte {
     Ok,

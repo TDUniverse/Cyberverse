@@ -78,7 +78,7 @@ RTTI_DEFINE_CLASS(NetworkGameSystem, {
     RTTI_METHOD(EnqueueLoadLastCheckpoint);
     RTTI_PROPERTY(FullyConnected);
     RTTI_PROPERTY(playerActionTracker);
-    RTTI_ALIAS("CyberM.Network.Managers.NetworkGameSystem");
+    RTTI_ALIAS("Cyberverse.Network.Managers.NetworkGameSystem");
 });
 
 // TODO: Thing about the concept of having EnqueueMessage public, it causes _this_, at least with templates: We need to

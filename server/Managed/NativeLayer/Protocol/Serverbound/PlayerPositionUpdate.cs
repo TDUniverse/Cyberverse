@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
-using CyberM.Server.NativeLayer.Protocol.Common;
+using Cyberverse.Server.NativeLayer.Protocol.Common;
 
-namespace CyberM.Server.NativeLayer.Protocol.Serverbound;
+namespace Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 
 
 [StructLayout(LayoutKind.Sequential, Pack = 8)]

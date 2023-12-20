@@ -7,15 +7,15 @@
 [submodule "client/red4ext/deps/red4ext.sdk"]
 	path = client/red4ext/deps/red4ext.sdk
 	url = https://github.com/WopsS/RED4ext.SDK.git
-[submodule "client/red4ext/deps/zpp_bits"]
-	path = client/red4ext/deps/zpp_bits
-	url = https://github.com/eyalz800/zpp_bits
-[submodule "client/red4ext/deps/GameNetworkingSockets"]
-	path = client/red4ext/deps/GameNetworkingSockets
-	url = https://github.com/ValveSoftware/GameNetworkingSockets.git
 [submodule "client/red4ext/deps/red-lib"]
 	path = client/red4ext/deps/red-lib
 	url = https://github.com/psiberx/cp2077-red-lib
 [submodule "server/Native/deps/zpp_bits"]
 	path = server/Native/deps/zpp_bits
+	url = https://github.com/eyalz800/zpp_bits
+[submodule "client/red4ext/deps/GameNetworkingSockets"]
+	path = client/red4ext/deps/GameNetworkingSockets
+	url = https://github.com/ValveSoftware/GameNetworkingSockets.git
+[submodule "client/red4ext/deps/zpp_bits"]
+	path = client/red4ext/deps/zpp_bits
 	url = https://github.com/eyalz800/zpp_bits

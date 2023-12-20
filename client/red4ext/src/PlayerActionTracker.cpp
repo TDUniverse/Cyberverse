@@ -25,8 +25,8 @@ void PlayerActionTracker::RecordPlayerAction(RED4ext::CName actionName, RED4ext:
     }
     else if (name == "Jump" && actionType == RED4ext::game::input::ActionType::BUTTON_RELEASED)
     {
-        const auto player = CyberM::Utils::GetPlayer();
-        const auto [X, Y, Z, W] = CyberM::Utils::Entity_GetWorldPosition(player);
+        const auto player = Cyberverse::Utils::GetPlayer();
+        const auto [X, Y, Z, W] = Cyberverse::Utils::Entity_GetWorldPosition(player);
 
         PlayerActionTracked tracked = {};
         tracked.action = eACTION_JUMP;
@@ -45,8 +45,8 @@ void PlayerActionTracker::OnShoot(RED4ext::Handle<RED4ext::gameprojectileShootEv
     SDK->logger->InfoF(PLUGIN, "OnShoot! range: %f", event->params.range);
     // // TODO: This is the completely wrong event, we want the WeaponObject and finding out that it has been excecuted
     // // even. There's scriptedPuppet->GetActiveWeapon()
-    // const auto player = CyberM::Utils::GetPlayer();
-    // const auto [X, Y, Z, W] = CyberM::Utils::Entity_GetWorldPosition(player);
+    // const auto player = Cyberverse::Utils::GetPlayer();
+    // const auto [X, Y, Z, W] = Cyberverse::Utils::Entity_GetWorldPosition(player);
     //
     // PlayerActionTracked tracked = {};
     // tracked.action = eACTION_RANGED_ATTACK;
@@ -91,10 +91,10 @@ void PlayerActionTracker::OnMounting(RED4ext::Handle<RED4ext::game::mounting::Mo
     // TODO: vehicles.swift, there is VehicleObject.GetRecordID(), but there is also GameObject::GetTDBID(go) which is more generic and handles casting,
     // so it works for puppets, devices _and_ vehicles. Question is if we should here just implement both so we can avoid casting and misleading?
 
-    const auto recordId = CyberM::Utils::VehicleObject_GetRecordID(vehicleInstance);
-    const auto [X, Y, Z, W] = CyberM::Utils::Entity_GetWorldPosition(vehicleInstance);
-    const auto orientation = CyberM::Utils::Entity_GetWorldOrientation(vehicleInstance);
-    const auto [Roll, Pitch, Yaw] = CyberM::Utils::Quaternion_ToEulerAngles(orientation);
+    const auto recordId = Cyberverse::Utils::VehicleObject_GetRecordID(vehicleInstance);
+    const auto [X, Y, Z, W] = Cyberverse::Utils::Entity_GetWorldPosition(vehicleInstance);
+    const auto orientation = Cyberverse::Utils::Entity_GetWorldOrientation(vehicleInstance);
+    const auto [Roll, Pitch, Yaw] = Cyberverse::Utils::Quaternion_ToEulerAngles(orientation);
 
     PlayerSpawnCar spawnCar = {};
     spawnCar.recordId = recordId.value;

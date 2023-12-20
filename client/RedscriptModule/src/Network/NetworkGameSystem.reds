@@ -1,4 +1,4 @@
-module CyberM.Network.Managers
+module Cyberverse.Network.Managers
 import Codeware.*
 
 public native class NetworkGameSystem extends IGameSystem {

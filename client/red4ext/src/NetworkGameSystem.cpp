@@ -185,7 +185,7 @@ bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, T content)
 
 void NetworkGameSystem::SetEntityPosition(const RED4ext::ent::EntityID entityId, RED4ext::Vector4 worldPosition, float yaw)
 {
-    const auto entity = CyberM::Utils::GetDynamicEntity(entityId);
+    const auto entity = Cyberverse::Utils::GetDynamicEntity(entityId);
     // TODO: For most, this is actually a NPCPuppet, for those that aren't, this will crash.
 
     if (entity.has_value())
@@ -346,15 +346,15 @@ void NetworkGameSystem::PollIncomingMessages()
             // TODO: If teleport flag is set
             //SetEntityPosition(entityId, worldPosition, teleport.yaw);
 
-            const auto entity = CyberM::Utils::GetDynamicEntity(entityId);
+            const auto entity = Cyberverse::Utils::GetDynamicEntity(entityId);
             if (!entity.has_value())
             {
                 SDK->logger->Info(PLUGIN, "Skipping TeleportEntity");
                 break;
             }
 
-            const auto yawSource = CyberM::Utils::Quaternion_ToEulerAngles(CyberM::Utils::Entity_GetWorldOrientation(entity.value())).Yaw;
-            const auto positionSource = CyberM::Utils::Entity_GetWorldPosition(entity.value());
+            const auto yawSource = Cyberverse::Utils::Quaternion_ToEulerAngles(Cyberverse::Utils::Entity_GetWorldOrientation(entity.value())).Yaw;
+            const auto positionSource = Cyberverse::Utils::Entity_GetWorldPosition(entity.value());
 
             if (positionSource.X == 0.0 && positionSource.Y == 0.0 && positionSource.Z == 0.0)
             {
@@ -366,7 +366,7 @@ void NetworkGameSystem::PollIncomingMessages()
                 break;
             }
 
-            SDK->logger->TraceF(PLUGIN, "New Interpolation Data: yaw %f -> %f, position: (%f, %f, %f) -> (%f, %f, %f)", yawSource, teleport.yaw, positionSource.X, positionSource.Y, positionSource.Z, teleport.targetPosition.x, teleport.targetPosition.y, teleport.targetPosition.z);
+            SDK->logger->TraceF(PLUGIN, "New Interpolation Data (entity %llu): yaw %f -> %f, position: (%f, %f, %f) -> (%f, %f, %f)", teleport.networkedEntityId, yawSource, teleport.yaw, positionSource.X, positionSource.Y, positionSource.Z, teleport.targetPosition.x, teleport.targetPosition.y, teleport.targetPosition.z);
 
             if (m_LastTeleportCommand.contains(entityId))
             {
@@ -380,7 +380,7 @@ void NetworkGameSystem::PollIncomingMessages()
 
             // TODO: This should probably be a map<id, list<data>>, so that a server that eagerly sends too much data doesn't increase interpolation delay
             //  in contrast, we can just increase the time velocity of the interpolator
-            const auto interpolation_data = InterpolationData(CyberM::Utils::Vector4To3(positionSource), teleport.targetPosition, yawSource, teleport.yaw, 0.1f);
+            const auto interpolation_data = InterpolationData(Cyberverse::Utils::Vector4To3(positionSource), teleport.targetPosition, yawSource, teleport.yaw, 0.1f);
             m_interpolationData[entityId] = interpolation_data;
         }
         break;
@@ -398,15 +398,15 @@ bool NetworkGameSystem::OnGameRestored()
 {
     const auto res = IGameSystem::OnGameRestored();
     SDK->logger->Info(PLUGIN, "Game restored: We're in the world");
-    const auto player = CyberM::Utils::GetPlayer();
+    const auto player = Cyberverse::Utils::GetPlayer();
 
     // Broken attempts:
-    // const auto transform = CyberM::Utils::Entity_GetWorldTransform(player);
-    // const auto position = CyberM::Utils::WorldPosition_ToVector4(transform.Position);
+    // const auto transform = Cyberverse::Utils::Entity_GetWorldTransform(player);
+    // const auto position = Cyberverse::Utils::WorldPosition_ToVector4(transform.Position);
     // SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f)", transform.Position.x.Bits, transform.Position.y.Bits,
     // transform.Position.z.Bits);
 
-    const auto position = CyberM::Utils::Entity_GetWorldPosition(player);
+    const auto position = Cyberverse::Utils::Entity_GetWorldPosition(player);
     SDK->logger->InfoF(PLUGIN, "Player at (%f, %f, %f, %f)", position.X, position.Y, position.Z, position.W);
 
     PlayerJoinWorld join_packet = {};
@@ -430,10 +430,10 @@ void NetworkGameSystem::TrackPlayerPosition(float deltaTime)
 
     m_TimeSinceLastPlayerPositionSync = 0.0f;
 
-    const auto player = CyberM::Utils::GetPlayer();
-    const auto [X, Y, Z, W] = CyberM::Utils::Entity_GetWorldPosition(player);
-    const auto orientation = CyberM::Utils::Entity_GetWorldOrientation(player);
-    const auto [Roll, Pitch, Yaw] = CyberM::Utils::Quaternion_ToEulerAngles(orientation);
+    const auto player = Cyberverse::Utils::GetPlayer();
+    const auto [X, Y, Z, W] = Cyberverse::Utils::Entity_GetWorldPosition(player);
+    const auto orientation = Cyberverse::Utils::Entity_GetWorldOrientation(player);
+    const auto [Roll, Pitch, Yaw] = Cyberverse::Utils::Quaternion_ToEulerAngles(orientation);
 
     const PlayerPositionUpdate position_update = { {  X, Y, Z }, Yaw};
     this->EnqueueMessage(1, position_update);
@@ -447,7 +447,7 @@ void NetworkGameSystem::InterpolatePuppets(const float deltaTime)
         auto& interpolator = it->second;
 
         const auto interpolationProgress = std::min(1.0f, interpolator.CalcInterpolationProgress(deltaTime));
-        const auto targetDestination = CyberM::Utils::LerpLocal(interpolator.positionSource, interpolator.positionTarget, interpolationProgress);
+        const auto targetDestination = Cyberverse::Utils::LerpLocal(interpolator.positionSource, interpolator.positionTarget, interpolationProgress);
 
         auto angleDirection1 = interpolator.rotationTarget - interpolator.rotationSource;
         auto angleDirection2 = interpolator.rotationSource - interpolator.rotationTarget;
@@ -473,7 +473,7 @@ void NetworkGameSystem::InterpolatePuppets(const float deltaTime)
 
         // TODO: Better interpolation here, e.g. if we go from 5 -> 355°, we should only do 10°, not 350.
         const float targetYaw = interpolator.rotationSource + interpolationProgress * actualAngleDistance;
-        const auto targetDestinationVec4 = CyberM::Utils::Vector3To4(targetDestination); // TODO: Get rid of this function call
+        const auto targetDestinationVec4 = Cyberverse::Utils::Vector3To4(targetDestination); // TODO: Get rid of this function call
         SDK->logger->TraceF(PLUGIN, "Interpolation Progress: %f, yaw: %f. dest (%f, %f, %f)", interpolationProgress, targetYaw, targetDestinationVec4.X, targetDestinationVec4.Y, targetDestinationVec4.Z);
 
         SetEntityPosition(entityId, targetDestinationVec4, targetYaw);

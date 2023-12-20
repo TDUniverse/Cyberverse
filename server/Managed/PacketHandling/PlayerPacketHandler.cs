@@ -1,8 +1,8 @@
-﻿using CyberM.Server.NativeLayer.Protocol.Serverbound;
-using CyberM.Server.Services;
-using CyberM.Server.Types;
+﻿using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
+using Cyberverse.Server.Services;
+using Cyberverse.Server.Types;
 
-namespace CyberM.Server.PacketHandling;
+namespace Cyberverse.Server.PacketHandling;
 
 public class PlayerPacketHandler
 {

@@ -35,9 +35,9 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
         }
 
         Red::TypeInfoRegistrar::RegisterDiscovered();
-        aSdk->logger->Info(aHandle, "CyberM has loaded");
+        aSdk->logger->Info(aHandle, "Cyberverse has loaded");
         // TODO: Get rid of it or fix the hwnd lookup but maybe also the timing.
-        // SetWindowText(GetActiveWindow(), "Cyber-M v0.0.1 - (c) 2023 MeFisto94");
+        // SetWindowText(GetActiveWindow(), "CyberVerse v0.0.1 - (c) 2023 MeFisto94");
         break;
     }
     case RED4ext::EMainReason::Unload:
@@ -75,7 +75,7 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::PluginInfo* aInfo)
      * For more information about this function see https://docs.red4ext.com/mod-developers/creating-a-plugin#query.
      */
 
-    aInfo->name = L"CyberM.Red4Ext";
+    aInfo->name = L"Cyberverse.Red4Ext";
     aInfo->author = L"MeFisto94";
     aInfo->version = RED4EXT_SEMVER(1, 0, 0);
     aInfo->runtime = RED4EXT_RUNTIME_LATEST;

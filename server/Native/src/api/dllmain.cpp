@@ -19,11 +19,11 @@
     #pragma warning Unknown dynamic link import/export semantics.
 #endif
 
-// TODO: Currently we can't use CYBERM_PUBLIC,
-// #if CYBERM_COMPILING
-// #   define CYBERM_PUBLIC EXPORT
+// TODO: Currently we can't use CYBERVERSE_PUBLIC,
+// #if CYBERVERSE_COMPILING
+// #   define CYBERVERSE_PUBLIC EXPORT
 // #else
-// #   define CYBERM_PUBLIC IMPORT
+// #   define CYBERVERSE_PUBLIC IMPORT
 // #endif
 
 

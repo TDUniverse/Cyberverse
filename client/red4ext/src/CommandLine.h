@@ -19,13 +19,13 @@ inline std::optional<std::string> ArgumentFromCommandLineUntilNextSpace(char* co
 }
 
 inline std::optional<std::string> ParseHostFromCommandLine(char* commandLine) {
-    const auto needle = "--cyberm-server-address=";
+    const auto needle = "--cyberverse-server-address=";
     constexpr auto needleLen = std::char_traits<char>::length(needle);
     return ArgumentFromCommandLineUntilNextSpace(commandLine, needle, needleLen);
 }
 
 inline std::optional<uint16_t> ParsePortFromCommandLine(char* commandLine) {
-    const auto needle = "--cyberm-server-port=";
+    const auto needle = "--cyberverse-server-port=";
     constexpr auto needleLen = std::char_traits<char>::length(needle);
     const auto portString = ArgumentFromCommandLineUntilNextSpace(commandLine, needle, needleLen);
     if (!portString.has_value())
