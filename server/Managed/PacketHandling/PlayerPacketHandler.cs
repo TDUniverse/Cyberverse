@@ -86,13 +86,32 @@ public class PlayerPacketHandler
         var len = RecordIdUtils.RecordIdToNameLength(content.recordId);
         
         Console.WriteLine($"Player spawned a {hash} [{len}] at {content.worldTransform}");
+        
+        // Try to find existing cars for that owner.
+        var existingVehicles = server.EntityService.SpawnedEntities
+            .Select(x => x.Value)
+            .Where(x => x.NetworkIdOwner == connectionId)
+            .Where(x => x.IsVehicle)
+            .ToList();
+
+        foreach (var vehicle in existingVehicles)
+        {
+            vehicle.NetworkIdOwner = 0;
+            // TODO: Despawn
+            vehicle.WorldTransform.x = 0.0f;
+            vehicle.WorldTransform.y = 0.0f;
+            vehicle.WorldTransform.z = 100.0f;
+            _tracker!.UpdateTrackingFor(vehicle);
+        }
 
         var entity = server.EntityService.CreateEntity(content.recordId);
         entity.WorldTransform = content.worldTransform; // Spawn the entity at the right spot already
         entity.Yaw = content.yaw;
         entity.NetworkIdOwner = connectionId;
+        entity.IsVehicle = true;
 
         _tracker!.UpdateTrackingFor(entity);
+        
     }
 
     public void RegisterOnServer(GameServer server)

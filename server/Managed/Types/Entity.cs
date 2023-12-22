@@ -18,6 +18,8 @@ public class Entity
     public ulong RecordId;
     public Vector3 WorldTransform;
     public float Yaw;
+    // TODO: Remove and derive from recordId
+    public bool IsVehicle;
 
     public Entity(ulong entityId, ulong recordId)
     {
