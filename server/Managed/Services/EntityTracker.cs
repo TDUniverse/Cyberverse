@@ -1,5 +1,4 @@
 ﻿using Cyberverse.Server.NativeLayer.Protocol.Clientbound;
-using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 using Cyberverse.Server.Types;
 
 namespace Cyberverse.Server.Services;
@@ -26,6 +25,12 @@ public class EntityTracker
         _server.EnqueueMessage(EMessageTypeClientbound.SpawnEntity, connectionId, 1, spawnEntity);
     }
 
+    private void SendDespawnPacket(ulong networkEntityId, uint connectionId)
+    {
+        var destroyEntity = new DestroyEntity { networkedEntityId = networkEntityId };
+        _server.EnqueueMessage(EMessageTypeClientbound.DestroyEntity, connectionId, 1, destroyEntity);
+    } 
+
     public void OnStartTrackingEntity(Player player, Entity entity)
     {
         if (!_trackedEntities.TryGetValue(player.ConnectionId, out var list))
@@ -45,19 +50,45 @@ public class EntityTracker
         SendSpawnPacket(entity, player.ConnectionId);
     }
 
-    public void UpdateTrackingFor(Entity entity)
+    public void OnStopTrackingEntity(Player player, Entity entity)
+    {
+        if (!_trackedEntities.TryGetValue(player.ConnectionId, out var list))
+        {
+            // Not tracking anyone, so can't stop.
+            return;
+        }
+        
+        if (!list.Contains(entity.NetworkedEntityId))
+        {
+            // Not tracked.
+            return;
+        }
+
+        list.Remove(entity.NetworkedEntityId);
+        SendDespawnPacket(entity.NetworkedEntityId, player.ConnectionId);
+    }
+
+    public void UpdateTrackingOf(Entity entity)
     {
         foreach (var (connectionId, player) in _server.PlayerService.ConnectedPlayers)
         {
             // Don't track your own entities.
             if (entity.NetworkIdOwner != connectionId)
             {
-                UpdateTrackingFor(entity, player);
+                UpdateTrackingOf(entity, player);
             }
         }
     }
 
-    public void UpdateTrackingFor(Entity entity, Player player)
+    public void StopTrackingOf(Entity entity)
+    {
+        foreach (var (connectionId, player) in _server.PlayerService.ConnectedPlayers)
+        {
+            OnStopTrackingEntity(player, entity);
+        }
+    }
+
+    public void UpdateTrackingOf(Entity entity, Player player)
     {
         // TODO: Challenge: Find the entity the player _currently_ wants to control. There could be multiple (e.g. in the car)
         // TODO: here, it's even more dumb, as we need to find out the camera at some point
@@ -88,7 +119,7 @@ public class EntityTracker
             }
             else
             {
-                // TODO: Implement destroying entities.
+                OnStopTrackingEntity(player, entity);
             }
         }
     }
@@ -105,7 +136,7 @@ public class EntityTracker
             if (tty.NetworkIdOwner != player.ConnectionId)
             {
                 //Console.WriteLine($"Force updating the tracking for the new player for {tty.networkedEntityId} == {key}");
-                UpdateTrackingFor(tty, player);
+                UpdateTrackingOf(tty, player);
             }
         }
     }

@@ -385,6 +385,32 @@ void NetworkGameSystem::PollIncomingMessages()
         }
         break;
 
+        case eDestroyEntity:
+        {
+            DestroyEntity destroy_entity = {};
+            if (zpp::bits::failure(in(destroy_entity)))
+            {
+                SDK->logger->Error(PLUGIN, "Faulty packet: DestroyEntity");
+                pIncomingMsg->Release();
+                continue;
+            }
+
+            if (!m_networkedEntitiesLookup.contains(destroy_entity.networkedEntityId))
+            {
+                SDK->logger->WarnF(PLUGIN, "Have no spawned entity for %llu", destroy_entity.networkedEntityId);
+                continue;
+            }
+
+            const auto entityId = m_networkedEntitiesLookup[destroy_entity.networkedEntityId];
+            if (!Red::CallVirtual(this, "DestroyTransientEntity", entityId))
+            {
+                SDK->logger->Warn(PLUGIN, "Failed to destroy entity!");
+            }
+
+            m_networkedEntitiesLookup.erase(entityId);
+        }
+        break;
+
         default:
             printf("Message Type: %d\n", frame.message_type);
             break;

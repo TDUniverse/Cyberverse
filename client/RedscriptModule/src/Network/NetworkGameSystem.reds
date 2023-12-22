@@ -11,8 +11,14 @@ public native class NetworkGameSystem extends IGameSystem {
         let npcSpec = new DynamicEntitySpec();
         //npcSpec.recordID = t"Character.spr_animals_bouncer1_ranged1_omaha_mb";
         npcSpec.recordID = entityName; //t"Character.Panam";
-        npcSpec.appearanceName = n"random"; // TODO
+        //npcSpec.appearanceName = n"random"; // TODO
 
+        // Trust the server to properly track the entity state, because otherwise,
+        // entities will just disappear for the client and never get back
+        // (i.e. being invisible), as the server will only re-spawn them when
+        // they have been properly despawned.
+        npcSpec.alwaysSpawned = true;
+        
         // base\characters\entities\main_npc\panam.ent
         //npcSpec.recordID = t"Vehicle.v_sport2_quadra_type66";
         //npcSpec.appearanceName = n"quadra_type66__basic_bulleat";
@@ -24,6 +30,10 @@ public native class NetworkGameSystem extends IGameSystem {
         npcSpec.tags = [n"RED4ext"];
 
         return GameInstance.GetDynamicEntitySystem().CreateEntity(npcSpec);
+    }
+
+    public func DestroyTransientEntity(entityId: EntityID) {
+        GameInstance.GetDynamicEntitySystem().DeleteEntity(entityId);
     }
 
     public func TeleportEntity(game: GameInstance, entity: ref<Entity>, position: Vector4, worldOrientation: EulerAngles) {

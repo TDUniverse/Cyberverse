@@ -19,6 +19,15 @@ struct SpawnEntity {
     }
 };
 
+struct DestroyEntity {
+    uint64_t networkedEntityId = 0;
+
+    inline static void FillMessageFrame(MessageFrame& frame) {
+        frame.message_type = eDestroyEntity;
+        frame.channel_id = 1; // TODO:
+    }
+};
+
 // TODO: There will be better packets, containing target locations for interpolation, with timestamps.
 struct TeleportEntity
 {

@@ -456,6 +456,12 @@ void GameServer::ProcessSendQueue()
         }
             break;
 
+        case eDestroyEntity:
+        {
+            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<DestroyEntity*>(val.data));
+        }
+            break;
+
 
         default:
             printf("Unknown messageType: %d\n", val.messageType);

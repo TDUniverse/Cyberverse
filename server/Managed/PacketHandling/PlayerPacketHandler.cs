@@ -78,7 +78,7 @@ public class PlayerPacketHandler
                     
             entity.WorldTransform = content.worldTransform;
             entity.Yaw = content.yaw;
-            _tracker!.UpdateTrackingFor(entity);
+            _tracker!.UpdateTrackingOf(entity);
         }
     }
 
@@ -100,11 +100,8 @@ public class PlayerPacketHandler
         foreach (var vehicle in existingVehicles)
         {
             vehicle.NetworkIdOwner = 0;
-            // TODO: Despawn
-            vehicle.WorldTransform.x = 0.0f;
-            vehicle.WorldTransform.y = 0.0f;
-            vehicle.WorldTransform.z = 100.0f;
-            _tracker!.UpdateTrackingFor(vehicle);
+            _tracker!.StopTrackingOf(vehicle);
+            server.EntityService.RemoveEntity(vehicle.NetworkedEntityId);
         }
 
         var entity = server.EntityService.CreateEntity(content.recordId);
@@ -113,7 +110,7 @@ public class PlayerPacketHandler
         entity.NetworkIdOwner = connectionId;
         entity.IsVehicle = true;
 
-        _tracker!.UpdateTrackingFor(entity);
+        _tracker!.UpdateTrackingOf(entity);
         
     }
 

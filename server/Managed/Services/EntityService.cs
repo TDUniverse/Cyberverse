@@ -26,4 +26,15 @@ public class EntityService
     {
         return CreateEntity(RecordIdUtils.ToRecordId(recordId));
     }
+
+    /// <summary>
+    /// Remove an entity from the list of spawned entities (kill it)
+    /// Note: this does _not_ send any packets. Use the entity tracker for that
+    /// </summary>
+    /// <param name="entityId">the id of the entity</param>
+    /// <returns>true if the element is successfully found and removed; otherwise, false</returns>
+    public bool RemoveEntity(ulong entityId)
+    {
+        return SpawnedEntities.Remove(entityId);
+    }
 }
