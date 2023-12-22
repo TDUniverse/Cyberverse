@@ -6,12 +6,20 @@ namespace Cyberverse.Server.Services;
 // TODO: This is just a hacked prototype, this can take any form of complexity and subtle bugs with it (and include dynamic visiblity)
 public class EntityTracker
 {
+    public delegate bool EntityVisibilityFilter(Player player, Entity entity);
+
     private readonly GameServer _server;
     private readonly Dictionary<uint, List<ulong>> _trackedEntities = new();
+    private EntityVisibilityFilter? _visibilityFilter = null;
 
     public EntityTracker(GameServer server)
     {
         _server = server;
+    }
+
+    public void SetEntityVisibilityFilter(EntityVisibilityFilter? filter)
+    {
+        _visibilityFilter = filter;
     }
     
     private void SendSpawnPacket(Entity entity, uint connectionId)
@@ -73,10 +81,19 @@ public class EntityTracker
         foreach (var (connectionId, player) in _server.PlayerService.ConnectedPlayers)
         {
             // Don't track your own entities.
-            if (entity.NetworkIdOwner != connectionId)
+            if (entity.NetworkIdOwner == connectionId)
             {
-                UpdateTrackingOf(entity, player);
+                continue;
             }
+
+            if (_visibilityFilter != null && !_visibilityFilter.Invoke(player, entity))
+            {
+                // In case the filter changed it's mind, remove the entity.
+                OnStopTrackingEntity(player, entity);
+                continue;
+            }
+            
+            UpdateTrackingOf(entity, player);
         }
     }
 
