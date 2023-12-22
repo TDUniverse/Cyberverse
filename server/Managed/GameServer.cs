@@ -2,11 +2,13 @@
 using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 using Cyberverse.Server.PacketHandling;
 using Cyberverse.Server.Services;
+using NLog;
 
 namespace Cyberverse.Server;
 
 public class GameServer: NativeGameServer
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly Dictionary<EMessageTypeServerbound, HandlePacket> _packetHandlers = new();
 
     public readonly EntityService EntityService;
@@ -62,7 +64,7 @@ public class GameServer: NativeGameServer
             return;
         }
         
-        Console.WriteLine($"Warning: No message handler for type {messageType}");
+        Logger.Warn($"No message handler for type {messageType}");
         if (message.messageType == 2)
         {
             var actionTracked = message.MarshalTo<PlayerActionTracked>();

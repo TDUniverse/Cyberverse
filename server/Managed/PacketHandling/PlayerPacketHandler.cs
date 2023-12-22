@@ -1,11 +1,13 @@
 ﻿using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 using Cyberverse.Server.Services;
 using Cyberverse.Server.Types;
+using NLog;
 
 namespace Cyberverse.Server.PacketHandling;
 
 public class PlayerPacketHandler
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly TypedPacketHandler<PlayerJoinWorld> _playerJoinHandler;
     private readonly TypedPacketHandler<PlayerPositionUpdate> _playerMoveHandler;
     private readonly TypedPacketHandler<PlayerSpawnCar> _playerSpawnCarHandler;
@@ -23,7 +25,7 @@ public class PlayerPacketHandler
     {
         if (_players!.ConnectedPlayers.TryGetValue(connectionId, out var player))
         {
-            Console.WriteLine("Player {0} joined the world at ({1}, {2}, {3})", player.Name, 
+            Logger.Trace("Player {0} joined the world at ({1}, {2}, {3})", player.Name, 
                 content.position.x, content.position.y, content.position.z);
 
             var recordId = new Random().NextSingle() > 0.5f ? "Character.Judy" : "Character.Panam";
@@ -36,7 +38,7 @@ public class PlayerPacketHandler
         }
         else
         {
-            Console.WriteLine($"Error: Could not find player with id {connectionId} in the player list.");
+            Logger.Warn($"Could not find player with id {connectionId} in the player list.");
         }
     }
 
@@ -69,7 +71,8 @@ public class PlayerPacketHandler
             // Note: this should already be solved.
             if (content.worldTransform.z == 0 && content.worldTransform.x == 0.010673523f)
             {
-                Console.WriteLine("Skipping position update");
+                // TODO: we should really remove that.
+                Logger.Trace("Skipping position update");
                 return;
             }
                     
@@ -85,7 +88,7 @@ public class PlayerPacketHandler
         var hash = RecordIdUtils.RecordIdToCrcHash(content.recordId);
         var len = RecordIdUtils.RecordIdToNameLength(content.recordId);
         
-        Console.WriteLine($"Player spawned a {hash} [{len}] at {content.worldTransform}");
+        Logger.Trace($"Player spawned a {hash} [{len}] at {content.worldTransform}");
         
         // Try to find existing cars for that owner.
         var existingVehicles = server.EntityService.SpawnedEntities

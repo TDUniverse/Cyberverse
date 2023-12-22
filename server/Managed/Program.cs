@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Cyberverse.Server.NativeLayer;
 using Cyberverse.Server.PacketHandling;
+using NLog;
 
 namespace Cyberverse.Server;
 
@@ -8,7 +9,8 @@ public class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Starting Cyberverse Server 0.0.1 (c) 2023 MeFisto94");
+        InitLogging();
+        LogManager.GetCurrentClassLogger().Info("Starting Cyberverse Server 0.0.1 (c) 2023 MeFisto94");
         var server = new GameServer(1337);
         AddTypicalPacketHandlers(server);
         
@@ -32,5 +34,34 @@ public class Program
         // TODO: Store the auth handler somewhere
         new AuthPacketHandler().RegisterOnServer(server);
         new PlayerPacketHandler().RegisterOnServer(server);
+    }
+    
+    private static void InitLogging()
+    {
+        NLog.Config.LoggingConfiguration config = new NLog.Config.LoggingConfiguration();
+        var logFile = new NLog.Targets.FileTarget("logfile")
+        {
+            CreateDirs = true,
+            FileName = "logs/log.txt",
+            ArchiveOldFileOnStartup = true,
+            ArchiveEvery = NLog.Targets.FileArchivePeriod.Hour,
+            ArchiveAboveSize = 100000000,
+            EnableArchiveFileCompression = true,
+            MaxArchiveDays = 30
+        };
+        var logConsole = new NLog.Targets.ColoredConsoleTarget("logconsole")
+        {
+            EnableAnsiOutput = true, // Maybe this improves the Open Game Panel(?)
+            DetectOutputRedirected = true // Disables colors when a file is detected
+        };
+
+        #if DEBUG
+        config.AddRule(LogLevel.Trace, LogLevel.Fatal, logConsole);
+        #else
+        config.AddRule(LogLevel.Info, LogLevel.Fatal, logConsole);
+        #endif
+        config.AddRule(LogLevel.Warn, LogLevel.Fatal, logFile);
+
+        LogManager.Configuration = config;
     }
 }

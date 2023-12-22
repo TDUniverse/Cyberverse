@@ -3,11 +3,13 @@ using Cyberverse.Server.NativeLayer.Protocol.Clientbound;
 using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 using Cyberverse.Server.Services;
 using Cyberverse.Server.Types;
+using NLog;
 
 namespace Cyberverse.Server.PacketHandling;
 
 public class AuthPacketHandler
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly TypedPacketHandler<InitAuthServerbound> _initAuthHandler;
     private PlayerService? _players = null;
 
@@ -18,7 +20,7 @@ public class AuthPacketHandler
 
     protected virtual void HandleInitAuth(GameServer server, EMessageTypeServerbound messageType, byte channelId, uint connectionId, InitAuthServerbound content)
     {
-        Console.WriteLine($"Connection request from {content.username}");
+        Logger.Trace($"Connection request from {content.username}");
             
         AuthResultClientBound resultPacket = default;
         resultPacket.protocol_version = GameServer.PROTOCOL_VERSION_CURRENT;
