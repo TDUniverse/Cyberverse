@@ -11,6 +11,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: recursive
     - name: Copying the protocol files
       run: cp -rv shared/protocol server/protocol
     - uses: satackey/action-docker-layer-caching@v0.0.11
