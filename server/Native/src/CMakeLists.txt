@@ -3,7 +3,6 @@ add_library(${CMAKE_PROJECT_NAME} SHARED "")
 
 set(PROJECT_HEADER_FILES
   Main.h
-  NetworkGameSystem.h
         GameServer.h
         AuthController.h
         api/message.h
@@ -11,7 +10,6 @@ set(PROJECT_HEADER_FILES
 
 set(PROJECT_SRC_FILES
   Main.cpp
-  NetworkGameSystem.cpp
         GameServer.cpp
         AuthController.cpp
         api/dllmain.cpp

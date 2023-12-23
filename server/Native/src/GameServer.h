@@ -1,10 +1,12 @@
 #pragma once
 #include "AuthController.h"
-#include "NetworkGameSystem.h"
 #include "api/message.h"
 
 #include <queue>
 #include <serverbound/AuthPacketsServerBound.h>
+
+#include <steam/isteamnetworkingsockets.h>
+#include <steam/steamnetworkingtypes.h>
 
 // TODO: add a callback for error logging instead of printing to stderr
 class GameServer {
@@ -16,6 +18,7 @@ private:
 
     std::queue<Message>* dll_recv_queue = new std::queue<Message>();
     std::queue<Message>* dll_send_queue = new std::queue<Message>();
+    void (*m_ConnectionStatusCallback)(uint32_t, uint32_t) = nullptr;
 
 protected:
     void PollConnectionStateChanges() const;
@@ -38,6 +41,7 @@ public:
 
     [[nodiscard]] Message PollRecvQueue() const;
     void EnqueueSendQueue(Message msg) const;
+    void SetConnectionStatusChangedCallback(void (*cb)(uint32_t, uint32_t));
     /* DLL API stop */
 
     template<typename T>

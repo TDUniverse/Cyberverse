@@ -27,6 +27,36 @@ public class GameServer: NativeGameServer
         _packetHandlers.Add(messageType, packetHandler);
     }
 
+    protected override void OnConnectionStateChange(ESteamNetworkingConnectionState state, uint connectionId)
+    {
+        Logger.Trace($"{connectionId} changed state to {state}");
+
+        // TODO: More handling of player connection states. Cleanup routines, pre-auth states, ...
+        if (state is ESteamNetworkingConnectionState.ClosedByPeer or ESteamNetworkingConnectionState.ProblemDetectedLocally)
+        {
+            if (!PlayerService.ConnectedPlayers.TryGetValue(connectionId, out var player))
+            {
+                // someone connected but never signed in
+                return;
+            }
+            
+            Logger.Info($"Player {player.Name} disconnected");
+            var playerEntities = EntityService.SpawnedEntities
+                .Select(x => x.Value)
+                .Where(x => x.NetworkIdOwner == connectionId)
+                .ToList();
+                
+            foreach (var playerEntity in playerEntities)
+            {
+                EntityTracker.StopTrackingOf(playerEntity);
+                EntityService.RemoveEntity(playerEntity.NetworkedEntityId);
+                EntityService.SpawnedEntities.Remove(playerEntity.NetworkedEntityId);
+            }
+
+            PlayerService.ConnectedPlayers.Remove(connectionId);
+        }
+    }
+
     public override void Update(float deltaTime)
     {
         base.Update(deltaTime);

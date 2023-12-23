@@ -20,6 +20,7 @@ public class NativeGameServer
 
         _listeningPort = listeningPort;
         _nativePtr = Native.server_create(listeningPort);
+        Native.server_set_connection_state_changed_cb(_nativePtr, OnConnectionStateChange);
     }
 
     public virtual void Update(float deltaTime)
@@ -40,5 +41,9 @@ public class NativeGameServer
     public void EnqueueMessage(Message message)
     {
         Native.server_enqueue_message(_nativePtr, message);
+    }
+
+    protected virtual void OnConnectionStateChange(ESteamNetworkingConnectionState state, uint connectionId)
+    {
     }
 }

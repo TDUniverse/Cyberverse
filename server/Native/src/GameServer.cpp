@@ -25,7 +25,6 @@ bool GameServer::Initialize()
 
 static void SteamNetConnectionStatusChangedCallback(SteamNetConnectionStatusChangedCallback_t *pInfo)
 {
-    printf("Connection Status Changed (%d): %s\n", pInfo->m_info.m_eState, pInfo->m_info.m_szEndDebug);
     SINGLETON_GAMESERVER->OnConnectionStatusChanged(pInfo);
 }
 
@@ -42,8 +41,8 @@ bool GameServer::ListenOn(const uint16_t nPort)
     serverLocalAddr.Clear();
     serverLocalAddr.m_port = nPort;
 
-    // SteamNetConnectionStatusChangedCallback needs a singleton to get back to this instance, so we're overwriting it (for now)
-    // maybe there's a better way like a dynamic jump table that just pushes ecx to a static value?
+    // SteamNetConnectionStatusChangedCallback needs a singleton to get back to this instance, so we're overwriting it
+    // (for now) maybe there's a better way like a dynamic jump table that just pushes ecx to a static value?
     SINGLETON_GAMESERVER = this;
 
     SteamNetworkingConfigValue_t opt = {};
@@ -67,6 +66,11 @@ bool GameServer::ListenOn(const uint16_t nPort)
     return true;
 }
 
+void GameServer::SetConnectionStatusChangedCallback(void (*cb)(uint32_t, uint32_t))
+{
+    m_ConnectionStatusCallback = cb;
+}
+
 void GameServer::OnConnectionStatusChanged(const SteamNetConnectionStatusChangedCallback_t* pInfo) const
 {
     // What's the state of the connection?
@@ -74,7 +78,7 @@ void GameServer::OnConnectionStatusChanged(const SteamNetConnectionStatusChanged
     {
     case k_ESteamNetworkingConnectionState_None:
         // NOTE: We will get callbacks here when we destroy connections.  You can ignore these.
-            break;
+        break;
 
     case k_ESteamNetworkingConnectionState_ClosedByPeer:
     case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
@@ -83,42 +87,10 @@ void GameServer::OnConnectionStatusChanged(const SteamNetConnectionStatusChanged
         // before we accepted the connection.)
         if ( pInfo->m_eOldState == k_ESteamNetworkingConnectionState_Connected )
         {
-
-            // Locate the client.  Note that it should have been found, because this
-            // is the only codepath where we remove clients (except on shutdown),
-            // and connection change callbacks are dispatched in queue order.
-            // auto itClient = m_mapClients.find( pInfo->m_hConn );
-            // assert( itClient != m_mapClients.end() );
-            //
-            // // Select appropriate log messages
-            // const char *pszDebugLogAction;
-            // if ( pInfo->m_info.m_eState == k_ESteamNetworkingConnectionState_ProblemDetectedLocally )
-            // {
-            //     pszDebugLogAction = "problem detected locally";
-            //     sprintf( temp, "Alas, %s hath fallen into shadow.  (%s)", itClient->second.m_sNick.c_str(), pInfo->m_info.m_szEndDebug );
-            // }
-            // else
-            // {
-            //     // Note that here we could check the reason code to see if
-            //     // it was a "usual" connection or an "unusual" one.
-            //     pszDebugLogAction = "closed by peer";
-            //     sprintf( temp, "%s hath departed", itClient->second.m_sNick.c_str() );
-            // }
-            //
-            // // Spew something to our own log.  Note that because we put their nick
-            // // as the connection description, it will show up, along with their
-            // // transport-specific data (e.g. their IP address)
-            // Printf( "Connection %s %s, reason %d: %s\n",
-            //     pInfo->m_info.m_szConnectionDescription,
-            //     pszDebugLogAction,
-            //     pInfo->m_info.m_eEndReason,
-            //     pInfo->m_info.m_szEndDebug
-            // );
-            //
-            // m_mapClients.erase( itClient );
-            //
-            // // Send a message so everybody else knows what happened
-            // SendStringToAllClients( temp );
+            if (m_ConnectionStatusCallback != nullptr)
+            {
+                m_ConnectionStatusCallback(pInfo->m_info.m_eState, pInfo->m_hConn);
+            }
         }
         else
         {
@@ -162,40 +134,10 @@ void GameServer::OnConnectionStatusChanged(const SteamNetConnectionStatusChanged
             break;
         }
 
-        // Generate a random nick.  A random temporary nick
-        // is really dumb and not how you would write a real chat server.
-        // You would want them to have some sort of signon message,
-        // and you would keep their client in a state of limbo (connected,
-        // but not logged on) until them.  I'm trying to keep this example
-        // code really simple.
-        // char nick[ 64 ];
-        // snprintf( nick, 64, "BraveWarrior%d", 10000 + ( rand() % 100000 ) );
-
-        // Send them a welcome message
-        // snprintf(temp, 1024, "Welcome, stranger.  Thou art known to us for now as '%s'; upon thine command '/nick' we shall know thee otherwise.\n", nick);
-        // printf(temp);
-        // SendStringToClient( pInfo->m_hConn, temp );
-        //
-        // // Also send them a list of everybody who is already connected
-        // if ( m_mapClients.empty() )
-        // {
-        //     SendStringToClient( pInfo->m_hConn, "Thou art utterly alone." );
-        // }
-        // else
-        // {
-        //     sprintf( temp, "%d companions greet you:", (int)m_mapClients.size() );
-        //     for ( auto &c: m_mapClients )
-        //         SendStringToClient( pInfo->m_hConn, c.second.m_sNick.c_str() );
-        // }
-
-        // Let everybody else know who they are for now
-        // snprintf( temp, 1024, "Hark!  A stranger hath joined this merry host.  For now we shall call them '%s'\n", nick );
-        // printf(temp);
-        // SendStringToAllClients( temp, pInfo->m_hConn );
-        //
-        // // Add them to the client list, using std::map wacky syntax
-        // m_mapClients[ pInfo->m_hConn ];
-        // SetClientNick( pInfo->m_hConn, nick );
+        if (m_ConnectionStatusCallback != nullptr)
+        {
+            m_ConnectionStatusCallback(pInfo->m_info.m_eState, pInfo->m_hConn);
+        }
         break;
     }
     case k_ESteamNetworkingConnectionState_Connected:
