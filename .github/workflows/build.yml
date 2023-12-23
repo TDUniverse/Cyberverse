@@ -1,0 +1,56 @@
+name: CI Build
+on:
+  push:
+    branches: [ "master", "feature/ci" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  docker-server:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Copying the protocol files
+      run: cp -rv shared/protocol server/protocol
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      continue-on-error: true
+    - name: Build the Docker image
+      working-directory: server
+      run: docker build . --file Dockerfile --tag cyberverse-server:$(date +%s)
+
+  client:
+    runs-on: windows-latest
+
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: lukka/get-cmake@latest
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@main
+        id: runvcpkg
+        with:
+          # The vcpkg.json file, which will be part of cache key computation.
+          vcpkgJsonGlob: 'client/red4ext/vcpkg.json'
+          vcpkgGitCommitId: '16ee2ecb31788c336ace8bb14c21801efb6836e4'
+      - name: Generate build output folder
+        run: mkdir '${{ github.workspace }}\client\red4ext\build\ninja-vcpkg'
+      - name: Run CMake with vcpkg.json manifest
+        uses: lukka/run-cmake@v10
+        with:
+          cmakeListsTxtPath: '${{ github.workspace }}/client/red4ext/CMakeLists.txt'
+          configurePreset: ninja-vcpkg
+          buildPreset: ninja-vcpkg
+          buildPresetAdditionalArgs: '[`--config Release`]'
+      - name: List $RUNNER_WORKSPACE after build
+        run: find $RUNNER_WORKSPACE
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RED4ext Plugin
+          path: client/red4ext/build/ninja-vcpkg/src/*.dll
