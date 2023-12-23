@@ -38,6 +38,8 @@ jobs:
           # The vcpkg.json file, which will be part of cache key computation.
           vcpkgJsonGlob: 'server/Native/vcpkg.json'
           vcpkgGitCommitId: '16ee2ecb31788c336ace8bb14c21801efb6836e4'
+      - name: Generate build output folder
+        run: mkdir '${{ github.workspace }}\server\Native\build\ninja-vcpkg'
       - name: Run CMake with vcpkg.json manifest
         uses: lukka/run-cmake@v10
         with:
