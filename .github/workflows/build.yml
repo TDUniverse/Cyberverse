@@ -42,7 +42,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           cmakeListsTxtPath: '${{ github.workspace }}/server/Native/CMakeLists.txt'
-          buildPreset: ninja-multi-vcpkg
+          buildPreset: ninja-vcpkg
           buildPresetAdditionalArgs: '[`--config Release`]'
       - name: List $RUNNER_WORKSPACE after build
         run: find $RUNNER_WORKSPACE
