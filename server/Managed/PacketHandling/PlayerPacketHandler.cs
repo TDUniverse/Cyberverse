@@ -8,6 +8,12 @@ namespace Cyberverse.Server.PacketHandling;
 public class PlayerPacketHandler
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private static readonly Random Random = new();
+    private static readonly string[] PossiblePlayerNpcChoice = ["Character.Judy", "Character.Panam", "Character.Alt", 
+        "Character.Clair", "Character.Dexter", "Character.Evelyn", "Character.Hanako", "Character.Jackie", 
+        "Character.Mama_Welles", "Character.Misty", "Character.Stout", "Character.Takemura", "Character.Tbug",
+        "Character.wakako_okada", "Character.Yorinobu"];
+    
     private readonly TypedPacketHandler<PlayerJoinWorld> _playerJoinHandler;
     private readonly TypedPacketHandler<PlayerPositionUpdate> _playerMoveHandler;
     private readonly TypedPacketHandler<PlayerSpawnCar> _playerSpawnCarHandler;
@@ -28,8 +34,8 @@ public class PlayerPacketHandler
             Logger.Trace("Player {0} joined the world at ({1}, {2}, {3})", player.Name, 
                 content.position.x, content.position.y, content.position.z);
 
-            var recordId = new Random().NextSingle() > 0.5f ? "Character.Judy" : "Character.Panam";
-            var entity = server.EntityService.CreateEntity(recordId);
+            var choice = Random.Next(PossiblePlayerNpcChoice.Length);
+            var entity = server.EntityService.CreateEntity(PossiblePlayerNpcChoice[choice]);
             entity.WorldTransform = content.position; // Spawn the entity at the right spot already
             entity.NetworkIdOwner = player.ConnectionId;
                 
