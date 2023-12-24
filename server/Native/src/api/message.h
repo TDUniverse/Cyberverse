@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 struct Message {
     uint8_t channelId = 0;
     uint16_t messageType = 0;

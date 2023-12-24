@@ -1,5 +1,4 @@
 #pragma once
-#include "AuthController.h"
 #include "api/message.h"
 
 #include <queue>
@@ -14,7 +13,6 @@ private:
     HSteamListenSocket m_hListenSock = 0;
     HSteamNetPollGroup m_hPollGroup = 0;
     ISteamNetworkingSockets *m_pInterface = nullptr;
-    AuthController m_authController;
 
     std::queue<Message>* dll_recv_queue = new std::queue<Message>();
     std::queue<Message>* dll_send_queue = new std::queue<Message>();
