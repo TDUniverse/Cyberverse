@@ -7,4 +7,6 @@ public enum EMessageTypeServerbound: ushort
     PlayerActionTracked = 2,
     PlayerPositionUpdate = 3,
     PlayerSpawnCar = 4,
+    PlayerMountCar = 5, // TODO: Implement
+    PlayerUnmountCar = 6
 }

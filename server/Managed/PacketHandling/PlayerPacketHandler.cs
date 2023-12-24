@@ -17,6 +17,7 @@ public class PlayerPacketHandler
     private readonly TypedPacketHandler<PlayerJoinWorld> _playerJoinHandler;
     private readonly TypedPacketHandler<PlayerPositionUpdate> _playerMoveHandler;
     private readonly TypedPacketHandler<PlayerSpawnCar> _playerSpawnCarHandler;
+    private readonly TypedPacketHandler<PlayerUnmountCar> _playerUnmountHandler;
     private EntityTracker? _tracker = null;
     private PlayerService? _players = null;
 
@@ -25,6 +26,7 @@ public class PlayerPacketHandler
         _playerJoinHandler = new TypedPacketHandler<PlayerJoinWorld>(HandleJoinWorld);
         _playerMoveHandler = new TypedPacketHandler<PlayerPositionUpdate>(HandlePositionUpdate);
         _playerSpawnCarHandler = new TypedPacketHandler<PlayerSpawnCar>(HandleSpawnCar);
+        _playerUnmountHandler = new TypedPacketHandler<PlayerUnmountCar>(HandleUnmountCar);
     }
 
     protected void HandleJoinWorld(GameServer server, EMessageTypeServerbound messageType, byte channelId, uint connectionId, PlayerJoinWorld content)
@@ -96,6 +98,19 @@ public class PlayerPacketHandler
         
         Logger.Trace($"Player spawned a {hash} [{len}] at {content.worldTransform}");
         
+        DespawnAllVehiclesForPlayer(server, connectionId);
+
+        var entity = server.EntityService.CreateEntity(content.recordId);
+        entity.WorldTransform = content.worldTransform; // Spawn the entity at the right spot already
+        entity.Yaw = content.yaw;
+        entity.NetworkIdOwner = connectionId;
+        entity.IsVehicle = true;
+
+        _tracker!.UpdateTrackingOf(entity);
+    }
+
+    private void DespawnAllVehiclesForPlayer(GameServer server, uint connectionId)
+    {
         // Try to find existing cars for that owner.
         var existingVehicles = server.EntityService.SpawnedEntities
             .Select(x => x.Value)
@@ -109,15 +124,12 @@ public class PlayerPacketHandler
             _tracker!.StopTrackingOf(vehicle);
             server.EntityService.RemoveEntity(vehicle.NetworkedEntityId);
         }
+    }
 
-        var entity = server.EntityService.CreateEntity(content.recordId);
-        entity.WorldTransform = content.worldTransform; // Spawn the entity at the right spot already
-        entity.Yaw = content.yaw;
-        entity.NetworkIdOwner = connectionId;
-        entity.IsVehicle = true;
-
-        _tracker!.UpdateTrackingOf(entity);
-        
+    protected void HandleUnmountCar(GameServer server, EMessageTypeServerbound messageType, byte channelId,
+        uint connectionId, PlayerUnmountCar content)
+    {
+        DespawnAllVehiclesForPlayer(server, connectionId);
     }
 
     public void RegisterOnServer(GameServer server)
@@ -128,5 +140,6 @@ public class PlayerPacketHandler
         server.AddPacketHandler(EMessageTypeServerbound.PlayerJoinWorld, _playerJoinHandler.HandlePacket);
         server.AddPacketHandler(EMessageTypeServerbound.PlayerPositionUpdate, _playerMoveHandler.HandlePacket);
         server.AddPacketHandler(EMessageTypeServerbound.PlayerSpawnCar, _playerSpawnCarHandler.HandlePacket);
+        server.AddPacketHandler(EMessageTypeServerbound.PlayerUnmountCar, _playerUnmountHandler.HandlePacket);
     }
 }

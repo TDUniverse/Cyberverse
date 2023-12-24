@@ -5,4 +5,5 @@ public native class PlayerActionTracker {
     public native func OnShoot(event: ref<gameprojectileShootEvent>) -> Void;
     public native func OnHit(gameObject: ref<GameObject>, event: ref<gameHitEvent>);
     public native func OnMounting(evt: ref<MountingEvent>);
+    public native func OnUnmounting(evt: ref<UnmountingEvent>);
 }

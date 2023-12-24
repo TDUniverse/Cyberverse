@@ -58,3 +58,13 @@ struct PlayerSpawnCar {
         frame.channel_id = 0; // TODO
     }
 };
+
+struct PlayerUnmountCar {
+    // TODO: NetworkedEntityId
+
+    inline static void FillMessageFrame(MessageFrame& frame)
+    {
+        frame.message_type = ePlayerUnmountCar;
+        frame.channel_id = 0; // TODO
+    }
+};

@@ -69,11 +69,16 @@ protected cb func OnAction(action: ListenerAction, consumer: ListenerActionConsu
 @wrapMethod(PlayerPuppet)
 protected cb func OnMountingEvent(evt: ref<MountingEvent>) -> Bool {
     let result = wrappedMethod(evt);
-    FTLog("Entered a car");
     GameInstance.GetNetworkGameSystem().playerActionTracker.OnMounting(evt);
     return result;
 }
 
+@wrapMethod(PlayerPuppet)
+protected cb func OnUnmountingEvent(evt: ref<UnmountingEvent>) -> Bool {
+    let result = wrappedMethod(evt);
+    GameInstance.GetNetworkGameSystem().playerActionTracker.OnUnmounting(evt);
+    return result;
+}
 @wrapMethod(BaseProjectile)
 protected cb func OnShoot(eventData: ref<gameprojectileShootEvent>) -> Bool {
     wrappedMethod(eventData);

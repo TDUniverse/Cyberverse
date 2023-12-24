@@ -87,5 +87,6 @@ RTTI_DEFINE_CLASS(NetworkGameSystem, {
 //  relevant caller CU (but that may be more than one for the same packet, making template hell even worse).
 template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerActionTracked msg);
 template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerSpawnCar msg);
+template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerUnmountCar msg);
 
 #endif //NETWORKMANAGERCONTROLLER_H

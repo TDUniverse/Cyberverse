@@ -308,6 +308,20 @@ void GameServer::PollIncomingMessages()
         }
         break;
 
+        case ePlayerUnmountCar:
+        {
+            PlayerUnmountCar player_unmount_car = {};
+            if (zpp::bits::failure(in(player_unmount_car)))
+            {
+                fprintf(stderr, "Faulty packet: PlayerUnmountCar\n");
+                pIncomingMsg->Release();
+                continue;
+            }
+
+            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_unmount_car);
+        }
+        break;
+
         default:
             printf("Message Type: %d\n", frame.message_type);
             break;
