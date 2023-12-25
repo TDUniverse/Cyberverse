@@ -81,3 +81,16 @@ struct PlayerEquipItem {
         frame.channel_id = 0; // TODO
     }
 };
+
+struct PlayerShoot {
+    // TODO: This should be the weaponId perspectively, not the TweakDBID
+    uint64_t itemIdWeapon;
+    Vector3 startPoint;
+    float charge;
+
+    inline static void FillMessageFrame(MessageFrame& frame)
+    {
+        frame.message_type = ePlayerShoot;
+        frame.channel_id = 0; // TODO
+    }
+};

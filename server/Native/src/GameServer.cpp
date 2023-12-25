@@ -336,6 +336,20 @@ void GameServer::PollIncomingMessages()
         }
         break;
 
+        case ePlayerShoot:
+        {
+            PlayerShoot player_shoot = {};
+            if (zpp::bits::failure(in(player_shoot)))
+            {
+                fprintf(stderr, "Faulty packet: PlayerShoot\n");
+                pIncomingMsg->Release();
+                continue;
+            }
+
+            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_shoot);
+        }
+        break;
+
         default:
             printf("Message Type: %d\n", frame.message_type);
             break;

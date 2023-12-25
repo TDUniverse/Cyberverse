@@ -9,5 +9,6 @@ public enum EMessageTypeServerbound: ushort
     PlayerSpawnCar = 4,
     PlayerMountCar = 5, // TODO: Implement
     PlayerUnmountCar = 6,
-    PlayerEquipItem = 7
+    PlayerEquipItem = 7,
+    PlayerShoot = 8
 }

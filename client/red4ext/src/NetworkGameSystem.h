@@ -89,5 +89,6 @@ template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerAction
 template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerSpawnCar msg);
 template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerUnmountCar msg);
 template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerEquipItem msg);
+template bool NetworkGameSystem::EnqueueMessage(uint8_t channel_id, PlayerShoot msg);
 
 #endif //NETWORKMANAGERCONTROLLER_H

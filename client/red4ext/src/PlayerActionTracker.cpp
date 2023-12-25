@@ -42,19 +42,11 @@ void PlayerActionTracker::RecordPlayerAction(RED4ext::CName actionName, RED4ext:
 
 void PlayerActionTracker::OnShoot(RED4ext::Handle<RED4ext::gameprojectileShootEvent> event)
 {
-    SDK->logger->InfoF(PLUGIN, "OnShoot! range: %f", event->params.range);
-    // // TODO: This is the completely wrong event, we want the WeaponObject and finding out that it has been excecuted
-    // // even. There's scriptedPuppet->GetActiveWeapon()
-    // const auto player = Cyberverse::Utils::GetPlayer();
-    // const auto [X, Y, Z, W] = Cyberverse::Utils::Entity_GetWorldPosition(player);
-    //
-    // PlayerActionTracked tracked = {};
-    // tracked.action = eACTION_RANGED_ATTACK;
-    //
-    // tracked.worldTransform = {};
-    // tracked.worldTransform.x = X;
-    // tracked.worldTransform.y = Y;
-    // tracked.worldTransform.z = Z;
+    PlayerShoot player_shoot = {};
+    player_shoot.charge = event->params.charge;
+    player_shoot.startPoint = Vector3 { event->startPoint.X, event->startPoint.Y, event->startPoint.Z };
+    player_shoot.itemIdWeapon = // TODO: FILL
+    Red::GetGameSystem<NetworkGameSystem>()->EnqueueMessage(0, player_shoot);
 }
 
 void PlayerActionTracker::OnHit(RED4ext::Handle<RED4ext::GameObject> gameObject,

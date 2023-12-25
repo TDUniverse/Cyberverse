@@ -19,6 +19,7 @@ public class PlayerPacketHandler
     private readonly TypedPacketHandler<PlayerSpawnCar> _playerSpawnCarHandler;
     private readonly TypedPacketHandler<PlayerUnmountCar> _playerUnmountHandler;
     private readonly TypedPacketHandler<PlayerEquipItem> _playerEquipHandler;
+    private readonly TypedPacketHandler<PlayerShoot> _playerShootHandler;
     private EntityTracker? _tracker = null;
     private PlayerService? _players = null;
 
@@ -29,6 +30,7 @@ public class PlayerPacketHandler
         _playerSpawnCarHandler = new TypedPacketHandler<PlayerSpawnCar>(HandleSpawnCar);
         _playerUnmountHandler = new TypedPacketHandler<PlayerUnmountCar>(HandleUnmountCar);
         _playerEquipHandler = new TypedPacketHandler<PlayerEquipItem>(HandleEquip);
+        _playerShootHandler = new TypedPacketHandler<PlayerShoot>(HandleShoot);
     }
 
     protected void HandleJoinWorld(GameServer server, EMessageTypeServerbound messageType, byte channelId, uint connectionId, PlayerJoinWorld content)
@@ -178,6 +180,12 @@ public class PlayerPacketHandler
         }
     }
 
+    private void HandleShoot(GameServer server, EMessageTypeServerbound messageType, byte channelId,
+        uint connectionId, PlayerShoot content)
+    {
+        Logger.Warn($"Shots fired! {content.itemIdWeapon} at {content.startPoint}");
+    }
+
     public void RegisterOnServer(GameServer server)
     {
         _tracker = server.EntityTracker; // TODO: Service registry or even using DI
@@ -188,5 +196,6 @@ public class PlayerPacketHandler
         server.AddPacketHandler(EMessageTypeServerbound.PlayerSpawnCar, _playerSpawnCarHandler.HandlePacket);
         server.AddPacketHandler(EMessageTypeServerbound.PlayerUnmountCar, _playerUnmountHandler.HandlePacket);
         server.AddPacketHandler(EMessageTypeServerbound.PlayerEquipItem, _playerEquipHandler.HandlePacket);
+        server.AddPacketHandler(EMessageTypeServerbound.PlayerShoot, _playerShootHandler.HandlePacket);
     }
 }
