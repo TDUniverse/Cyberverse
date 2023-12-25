@@ -138,3 +138,25 @@ void PlayerActionTracker::OnUnmounting(RED4ext::Handle<RED4ext::game::mounting::
     const PlayerUnmountCar unmount_car = {};
     Red::GetGameSystem<NetworkGameSystem>()->EnqueueMessage(0, unmount_car);
 }
+
+void PlayerActionTracker::OnItemEquipped(const RED4ext::TweakDBID slot, const RED4ext::ItemID item, const bool isWeapon)
+{
+    SDK->logger->InfoF(PLUGIN, "Item Equipped at slot %llu with item %llu", slot.value, item.tdbid.value);
+    PlayerEquipItem player_equip = {};
+    player_equip.slot = slot.value;
+    player_equip.itemId = item.tdbid.value;
+    player_equip.isWeapon = isWeapon;
+    player_equip.isUnequipping = false;
+    Red::GetGameSystem<NetworkGameSystem>()->EnqueueMessage(0, player_equip);
+}
+
+void PlayerActionTracker::OnItemUnequipped(const RED4ext::TweakDBID slot, const RED4ext::ItemID item, const bool isWeapon)
+{
+    SDK->logger->InfoF(PLUGIN, "Item Unequipped at slot %llu with item %llu", slot.value, item.tdbid.value);
+    PlayerEquipItem player_equip = {};
+    player_equip.slot = slot.value;
+    player_equip.itemId = item.tdbid.value;
+    player_equip.isWeapon = isWeapon;
+    player_equip.isUnequipping = true;
+    Red::GetGameSystem<NetworkGameSystem>()->EnqueueMessage(0, player_equip);
+}

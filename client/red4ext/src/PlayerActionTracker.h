@@ -10,6 +10,7 @@
 #include "RED4ext/Scripting/Natives/Generated/game/mounting/MountingEvent.hpp"
 #include "RED4ext/Scripting/Natives/Generated/game/mounting/UnmountingEvent.hpp"
 #include "RED4ext/Scripting/Natives/Generated/game/projectile/ShootEvent.hpp"
+#include "RED4ext/Scripting/Natives/Generated/game/weapon/Object.hpp"
 
 class PlayerActionTracker final : public Red::IScriptable
 {
@@ -19,6 +20,8 @@ public:
     void OnHit(RED4ext::Handle<RED4ext::GameObject> gameObject, RED4ext::Handle<RED4ext::gameHitEvent> event);
     void OnMounting(RED4ext::Handle<RED4ext::game::mounting::MountingEvent> event);
     void OnUnmounting(RED4ext::Handle<RED4ext::game::mounting::UnmountingEvent> event);
+    void OnItemEquipped(RED4ext::TweakDBID slot, RED4ext::ItemID item, bool isWeapon);
+    void OnItemUnequipped(RED4ext::TweakDBID slot, RED4ext::ItemID item, bool isWeapon);
 private:
     RTTI_IMPL_TYPEINFO(PlayerActionTracker);
     RTTI_IMPL_ALLOCATOR();
@@ -30,5 +33,7 @@ RTTI_DEFINE_CLASS(PlayerActionTracker, {
     RTTI_METHOD(OnHit);
     RTTI_METHOD(OnMounting);
     RTTI_METHOD(OnUnmounting);
+    RTTI_METHOD(OnItemEquipped);
+    RTTI_METHOD(OnItemUnequipped);
     RTTI_ALIAS("Cyberverse.Network.Managers.PlayerActionTracker");
 });

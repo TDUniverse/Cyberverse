@@ -79,6 +79,21 @@ protected cb func OnUnmountingEvent(evt: ref<UnmountingEvent>) -> Bool {
     GameInstance.GetNetworkGameSystem().playerActionTracker.OnUnmounting(evt);
     return result;
 }
+
+// replaces the OnWeapoNEquipEvent as we need the counterpart for unequiping anyway?
+// protected cb func OnWeaponEquipEvent(evt: ref<WeaponEquipEvent>) -> Bool {
+@wrapMethod(PlayerPuppet)
+public final func OnItemEquipped(slot: TweakDBID, item: ItemID) -> Void {
+    let isWeapon = RPGManager.IsItemWeapon(item);
+    GameInstance.GetNetworkGameSystem().playerActionTracker.OnItemEquipped(slot, item, isWeapon);
+}
+
+@wrapMethod(PlayerPuppet)
+public final func OnItemUnequipped(slot: TweakDBID, item: ItemID) -> Void {
+    let isWeapon = RPGManager.IsItemWeapon(item);
+    GameInstance.GetNetworkGameSystem().playerActionTracker.OnItemUnequipped(slot, item, isWeapon);
+}
+
 @wrapMethod(BaseProjectile)
 protected cb func OnShoot(eventData: ref<gameprojectileShootEvent>) -> Bool {
     wrappedMethod(eventData);
@@ -92,12 +107,12 @@ protected cb func OnShootTarget(eventData: ref<gameprojectileShootTargetEvent>) 
     FTLog("Shoot Target");
 }
 
-@wrapMethod(GameObject)
-protected cb func OnHit(evt: ref<gameHitEvent>) -> Bool {
-    wrappedMethod(evt);
-    FTLog("OnHit");
-    GameInstance.GetNetworkGameSystem().playerActionTracker.OnHit(this, evt);
-}
+// @wrapMethod(GameObject)
+// protected cb func OnHit(evt: ref<gameHitEvent>) -> Bool {
+//     wrappedMethod(evt);
+//     FTLog("OnHit");
+//     GameInstance.GetNetworkGameSystem().playerActionTracker.OnHit(this, evt);
+// }
 
 // @wrapMethod(JumpEvents)
 // protected cb func OnEnter(stateContext: ref<StateContext>, scriptInterface: ref<StateGameScriptInterface>) -> Void {}

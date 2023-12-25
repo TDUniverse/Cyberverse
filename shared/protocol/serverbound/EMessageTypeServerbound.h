@@ -9,5 +9,6 @@ enum EMessageTypeServerbound: uint16_t {
     ePlayerPositionUpdate = 3,
     ePlayerSpawnCar = 4,
     ePlayerMountCar = 5, // TODO: Implement
-    ePlayerUnmountCar = 6
+    ePlayerUnmountCar = 6,
+    ePlayerEquipItem = 7
 };

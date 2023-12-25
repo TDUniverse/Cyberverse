@@ -322,6 +322,20 @@ void GameServer::PollIncomingMessages()
         }
         break;
 
+        case ePlayerEquipItem:
+        {
+            PlayerEquipItem player_equip_item = {};
+            if (zpp::bits::failure(in(player_equip_item)))
+            {
+                fprintf(stderr, "Faulty packet: PlayerEquipItem\n");
+                pIncomingMsg->Release();
+                continue;
+            }
+
+            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_equip_item);
+        }
+        break;
+
         default:
             printf("Message Type: %d\n", frame.message_type);
             break;
@@ -418,6 +432,11 @@ void GameServer::ProcessSendQueue()
         }
             break;
 
+        case eEquipItemEntity:
+        {
+            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<EquipItemEntity*>(val.data));
+        }
+            break;
 
         default:
             printf("Unknown messageType: %d\n", val.messageType);

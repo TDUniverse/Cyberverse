@@ -18,6 +18,7 @@ public class PlayerPacketHandler
     private readonly TypedPacketHandler<PlayerPositionUpdate> _playerMoveHandler;
     private readonly TypedPacketHandler<PlayerSpawnCar> _playerSpawnCarHandler;
     private readonly TypedPacketHandler<PlayerUnmountCar> _playerUnmountHandler;
+    private readonly TypedPacketHandler<PlayerEquipItem> _playerEquipHandler;
     private EntityTracker? _tracker = null;
     private PlayerService? _players = null;
 
@@ -27,6 +28,7 @@ public class PlayerPacketHandler
         _playerMoveHandler = new TypedPacketHandler<PlayerPositionUpdate>(HandlePositionUpdate);
         _playerSpawnCarHandler = new TypedPacketHandler<PlayerSpawnCar>(HandleSpawnCar);
         _playerUnmountHandler = new TypedPacketHandler<PlayerUnmountCar>(HandleUnmountCar);
+        _playerEquipHandler = new TypedPacketHandler<PlayerEquipItem>(HandleEquip);
     }
 
     protected void HandleJoinWorld(GameServer server, EMessageTypeServerbound messageType, byte channelId, uint connectionId, PlayerJoinWorld content)
@@ -132,6 +134,50 @@ public class PlayerPacketHandler
         DespawnAllVehiclesForPlayer(server, connectionId);
     }
 
+    private void HandleEquip(GameServer server, EMessageTypeServerbound messageType, byte channelId,
+        uint connectionId, PlayerEquipItem content)
+    {
+        Logger.Info($"Player did (un: {content.isUnequipping})equip an item (slot {content.slot}). Is it a weapon? {content.isWeapon}");
+        if (content.isUnequipping)
+        {
+            // Try to find existing cars for that owner.
+            var existingItems = server.EntityService.SpawnedEntities
+                .Select(x => x.Value)
+                .Where(x => x.NetworkIdOwner == connectionId)
+                .Where(x => x.RecordId == content.itemId)
+                .ToList();
+
+            // TODO: As long as we don't have NetworkedEntityIds, we need to unequip all of those.
+            foreach (var item in existingItems)
+            {
+                item.NetworkIdOwner = 0;
+                _tracker!.StopTrackingOf(item);
+                server.EntityService.RemoveEntity(item.NetworkedEntityId);
+            }
+        }
+        else
+        {
+            // TODO: How are we supposed to flag things as items? dedicated maps? But it'll still be entities in the end.
+            // Also this is relevant when we have our own EquipItemEntity. Right now they are entities in the world.
+            var playerEntity = server.EntityService.SpawnedEntities
+                .Select(x => x.Value)
+                .FirstOrDefault(x => x.NetworkIdOwner == connectionId);
+
+            if (playerEntity == null)
+            {
+                return;
+            }
+            
+            var entity = server.EntityService.CreateEntity(content.itemId);
+            entity.WorldTransform = playerEntity.WorldTransform; // TODO
+            entity.Yaw = playerEntity.Yaw; // TODO
+            entity.NetworkIdOwner = connectionId;
+            entity.IsVehicle = false;
+
+            _tracker!.UpdateTrackingOf(entity);
+        }
+    }
+
     public void RegisterOnServer(GameServer server)
     {
         _tracker = server.EntityTracker; // TODO: Service registry or even using DI
@@ -141,5 +187,6 @@ public class PlayerPacketHandler
         server.AddPacketHandler(EMessageTypeServerbound.PlayerPositionUpdate, _playerMoveHandler.HandlePacket);
         server.AddPacketHandler(EMessageTypeServerbound.PlayerSpawnCar, _playerSpawnCarHandler.HandlePacket);
         server.AddPacketHandler(EMessageTypeServerbound.PlayerUnmountCar, _playerUnmountHandler.HandlePacket);
+        server.AddPacketHandler(EMessageTypeServerbound.PlayerEquipItem, _playerEquipHandler.HandlePacket);
     }
 }

@@ -41,3 +41,17 @@ struct TeleportEntity
         frame.channel_id = 1; // TODO:
     }
 };
+
+struct EquipItemEntity {
+    uint64_t networkedEntityId;
+    uint64_t slot;
+    uint64_t itemId;
+    bool isWeapon;
+    bool isUnequipping;
+
+    inline static void FillMessageFrame(MessageFrame& frame)
+    {
+        frame.message_type = eEquipItemEntity;
+        frame.channel_id = 0; // TODO
+    }
+};

@@ -68,3 +68,16 @@ struct PlayerUnmountCar {
         frame.channel_id = 0; // TODO
     }
 };
+
+struct PlayerEquipItem {
+    uint64_t slot;
+    uint64_t itemId;
+    bool isWeapon;
+    bool isUnequipping;
+
+    inline static void FillMessageFrame(MessageFrame& frame)
+    {
+        frame.message_type = ePlayerEquipItem;
+        frame.channel_id = 0; // TODO
+    }
+};
