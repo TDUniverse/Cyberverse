@@ -1,5 +1,10 @@
 # CyberVerse - The Cyberpunk 2077 Multiplayer Framework
 
+> [!IMPORTANT]  
+> In it's current form, CyberVerse is _only_  relevant for developers/modders. Regular users may
+> struggle getting it to run and we don't actively support that, either. There are a lot of missing
+> pieces before we can start to recommend using CyberVerse to play on.
+
 ## What is Cyberverse exactly?
 Cyberverse is a very much in progress implementation of a multiplayer into Cyberpunk 2077 v2.1.  
 It being a "framework" additionally means that the server side is flexibly extended by Plugins that provide additional behavior. As such, it will be a good choice for Roleplaying Servers.
