@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Copying the protocol files
@@ -27,7 +27,7 @@ jobs:
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - uses: lukka/get-cmake@latest
