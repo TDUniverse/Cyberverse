@@ -199,7 +199,7 @@ bool GameServer::EnqueueMessage(HSteamNetConnection connection, uint8_t channel_
 
 void GameServer::PollIncomingMessages()
 {
-    // TODO: More resonable quit condition
+    // TODO: More reasonable quit condition
     while (true)
     {
         ISteamNetworkingMessage* pIncomingMsg = nullptr;
@@ -236,123 +236,32 @@ void GameServer::PollIncomingMessages()
         // like that on the CSharp side (e.g. strings)
         switch (frame.message_type)
         {
-        case EINIT_AUTH:
-        {
-            auto init_auth = InitAuthServerBound();
-            if (zpp::bits::failure(in(init_auth)))
+            case EINIT_AUTH:
             {
-                fprintf(stderr, "Faulty packet: InitAuthServerBound\n");
-                pIncomingMsg->Release();
-                continue;
+                auto init_auth = InitAuthServerBound();
+                if (zpp::bits::failure(in(init_auth)))
+                {
+                    fprintf(stderr, "Faulty packet: InitAuthServerBound\n");
+                    pIncomingMsg->Release();
+                    continue;
+                }
+
+                // extra pain due to C# ABI
+                auto init_auth_abi = new InitAuthServerBoundCSharp(init_auth);
+                AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, reinterpret_cast<uintptr_t>(init_auth_abi));
             }
-
-            // extra pain due to C# ABI
-            auto init_auth_abi = new InitAuthServerBoundCSharp(init_auth);
-            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, reinterpret_cast<uintptr_t>(init_auth_abi));
-        }
-        break;
-
-        case EPLAYER_JOIN_WORLD:
-        {
-            PlayerJoinWorld player_join = {};
-            if (zpp::bits::failure(in(player_join)))
-            {
-                fprintf(stderr, "Faulty packet: PlayerJoinWorld\n");
-                pIncomingMsg->Release();
-                continue;
-            }
-
-            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_join);
-        }
-        break;
-
-        case ePlayerActionTracked:
-        {
-            PlayerActionTracked action_tracked = {};
-            if (zpp::bits::failure(in(action_tracked)))
-            {
-                fprintf(stderr, "Faulty packet: PlayerActionTracked\n");
-                pIncomingMsg->Release();
-                continue;
-            }
-
-            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, action_tracked);
-        }
-        break;
-
-        case ePlayerPositionUpdate:
-        {
-            PlayerPositionUpdate position_update = {};
-            if (zpp::bits::failure(in(position_update)))
-            {
-                fprintf(stderr, "Faulty packet: PlayerPositionUpdate\n");
-                pIncomingMsg->Release();
-                continue;
-            }
-
-            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, position_update);
-        }
-        break;
-
-        case ePlayerSpawnCar:
-        {
-            PlayerSpawnCar player_spawn_car = {};
-            if (zpp::bits::failure(in(player_spawn_car)))
-            {
-                fprintf(stderr, "Faulty packet: PlayerSpawnCar\n");
-                pIncomingMsg->Release();
-                continue;
-            }
-
-            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_spawn_car);
-        }
-        break;
-
-        case ePlayerUnmountCar:
-        {
-            PlayerUnmountCar player_unmount_car = {};
-            if (zpp::bits::failure(in(player_unmount_car)))
-            {
-                fprintf(stderr, "Faulty packet: PlayerUnmountCar\n");
-                pIncomingMsg->Release();
-                continue;
-            }
-
-            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_unmount_car);
-        }
-        break;
-
-        case ePlayerEquipItem:
-        {
-            PlayerEquipItem player_equip_item = {};
-            if (zpp::bits::failure(in(player_equip_item)))
-            {
-                fprintf(stderr, "Faulty packet: PlayerEquipItem\n");
-                pIncomingMsg->Release();
-                continue;
-            }
-
-            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_equip_item);
-        }
-        break;
-
-        case ePlayerShoot:
-        {
-            PlayerShoot player_shoot = {};
-            if (zpp::bits::failure(in(player_shoot)))
-            {
-                fprintf(stderr, "Faulty packet: PlayerShoot\n");
-                pIncomingMsg->Release();
-                continue;
-            }
-
-            AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, player_shoot);
-        }
-        break;
-
-        default:
-            printf("Message Type: %d\n", frame.message_type);
             break;
+
+            DESERIALIZE_RECV_QUEUE(EPLAYER_JOIN_WORLD, PlayerJoinWorld)
+            DESERIALIZE_RECV_QUEUE(ePlayerActionTracked, PlayerActionTracked)
+            DESERIALIZE_RECV_QUEUE(ePlayerPositionUpdate, PlayerPositionUpdate)
+            DESERIALIZE_RECV_QUEUE(ePlayerSpawnCar, PlayerSpawnCar)
+            DESERIALIZE_RECV_QUEUE(ePlayerUnmountCar, PlayerUnmountCar)
+            DESERIALIZE_RECV_QUEUE(ePlayerEquipItem, PlayerEquipItem)
+            DESERIALIZE_RECV_QUEUE(ePlayerShoot, PlayerShoot)
+            default:
+                printf("Unknown Message Type: %d\n", frame.message_type);
+                break;
         }
 
         pIncomingMsg->Release();
@@ -394,19 +303,19 @@ Message GameServer::PollRecvQueue() const
 }
 
 template<typename T>
-void GameServer::AddToRecvQueue(const uint16_t message_type, const uint32 connectionId, const uint8_t channelId,
+void GameServer::AddToRecvQueue(const uint16_t messageType, const uint32 connectionId, const uint8_t channelId,
                                 const T& data) const
 {
-    // Helper template as we can only deserialize into stack based structs and we then copy the packet into a long lived ptr.
+    // Helper template as we can only deserialize into stack based structs, and we then copy the packet into a long-lived ptr.
     const auto buf = malloc(sizeof(T));
     memcpy(buf, (void*)&data, sizeof(T));
-    AddToRecvQueue(message_type, connectionId, channelId, reinterpret_cast<uintptr_t>(buf));
+    AddToRecvQueue(messageType, connectionId, channelId, reinterpret_cast<uintptr_t>(buf));
 }
 
-void GameServer::AddToRecvQueue(const uint16_t message_type, const uint32 connectionId, const uint8_t channelId,
+void GameServer::AddToRecvQueue(const uint16_t messageType, const uint32 connectionId, const uint8_t channelId,
                                 const uintptr_t data) const
 {
-    const auto message = Message{channelId, message_type, connectionId, data};
+    const auto message = Message{channelId, messageType, connectionId, data};
     dll_recv_queue->emplace(message);
 }
 
@@ -424,36 +333,13 @@ void GameServer::ProcessSendQueue()
 
         switch (val.messageType)
         {
-        case EINIT_AUTH_RESULT:
-        {
-            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<AuthResultClientBound*>(val.data));
-        }
-            break;
-        case eSpawnEntity:
-        {
-            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<SpawnEntity*>(val.data));
-        }
-            break;
-        case eTeleportEntity:
-        {
-            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<TeleportEntity*>(val.data));
-        }
-            break;
-
-        case eDestroyEntity:
-        {
-            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<DestroyEntity*>(val.data));
-        }
-            break;
-
-        case eEquipItemEntity:
-        {
-            EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<EquipItemEntity*>(val.data));
-        }
-            break;
-
-        default:
-            printf("Unknown messageType: %d\n", val.messageType);
+            SERIALIZE_SEND_QUEUE(EINIT_AUTH_RESULT, AuthResultClientBound)
+            SERIALIZE_SEND_QUEUE(eSpawnEntity, SpawnEntity)
+            SERIALIZE_SEND_QUEUE(eTeleportEntity, TeleportEntity)
+            SERIALIZE_SEND_QUEUE(eDestroyEntity, DestroyEntity)
+            SERIALIZE_SEND_QUEUE(eEquipItemEntity, EquipItemEntity)
+            default:
+                printf("Unknown messageType: %d\n", val.messageType);
         }
 
         free(reinterpret_cast<void*>(val.data));

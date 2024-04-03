@@ -7,6 +7,18 @@
 #include <steam/isteamnetworkingsockets.h>
 #include <steam/steamnetworkingtypes.h>
 
+#define SERIALIZE_SEND_QUEUE(ENUM_VARIANT, CLASS) \
+    case ENUM_VARIANT: { EnqueueMessage(val.connectionId, val.channelId, *reinterpret_cast<CLASS*>(val.data)); } break;
+
+#define DESERIALIZE_RECV_QUEUE(ENUM_VARIANT, CLASS) \
+    case ENUM_VARIANT: { \
+        CLASS message = {}; \
+        if (zpp::bits::failure(in(message)))  { \
+            fprintf(stderr, "Faulty packet: "#CLASS"\n"); pIncomingMsg->Release(); continue; \
+        } \
+        AddToRecvQueue(frame.message_type, pIncomingMsg->m_conn, frame.channel_id, message); \
+    } break;
+
 // TODO: add a callback for error logging instead of printing to stderr
 class GameServer {
 private:
@@ -20,8 +32,8 @@ private:
 
 protected:
     void PollConnectionStateChanges() const;
-    void AddToRecvQueue(uint16_t message_type, uint32 connectionId, uint8_t channelId, uintptr_t data) const;
-    template<typename T> void AddToRecvQueue(uint16_t message_type, uint32 connectionId, uint8_t channelId,
+    void AddToRecvQueue(uint16_t messageType, uint32 connectionId, uint8_t channelId, uintptr_t data) const;
+    template<typename T> void AddToRecvQueue(uint16_t messageType, uint32 connectionId, uint8_t channelId,
                                 const T& data) const;
     void PollIncomingMessages();
     void ProcessSendQueue();
