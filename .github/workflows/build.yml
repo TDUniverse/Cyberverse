@@ -37,7 +37,7 @@ jobs:
         with:
           # The vcpkg.json file, which will be part of cache key computation.
           vcpkgJsonGlob: 'client/red4ext/vcpkg.json'
-          vcpkgGitCommitId: '16ee2ecb31788c336ace8bb14c21801efb6836e4'
+          vcpkgGitCommitId: '271a5b8850aa50f9a40269cbf3cf414b36e333d6'
       - name: Generate build output folder
         run: mkdir '${{ github.workspace }}\client\red4ext\build\ninja-vcpkg'
       - name: Run CMake with vcpkg.json manifest
