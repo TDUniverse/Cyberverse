@@ -1,5 +1,5 @@
 [submodule "Native/deps/zpp_bits"]
-	path = server/Native/deps/zpp_bits/zpp_bits
+	path = server/Native/deps/zpp_bits/
 	url = https://github.com/eyalz800/zpp_bits
 [submodule "Native/deps/GameNetworkingSockets"]
 	path = server/Native/deps/GameNetworkingSockets
