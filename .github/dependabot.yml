@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: "gitsubmodule"
+    directory: "client/red4ext/deps/red-lib"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gitsubmodule"
+    directory: "client/red4ext/deps/red4ext.sdk"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gitsubmodule"
+    directory: "client/red4ext/deps/GameNetworkingSockets"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gitsubmodule"
+    directory: "server/Native/deps/GameNetworkingSockets"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gitsubmodule"
+    directory: "client/red4ext/deps/zpp_bits"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gitsubmodule"
+    directory: "server/Native/deps/zpp_bits/zpp_bits"
+    schedule:
+      interval: "weekly"
