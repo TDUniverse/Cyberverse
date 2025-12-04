@@ -1,4 +1,4 @@
-FROM kuyoh/vcpkg:latest AS base
+FROM kuyoh/vcpkg:2025.10.17 AS base
 WORKDIR /workspace
 
 ADD Native /workspace
@@ -13,14 +13,14 @@ RUN cmake -DCMAKE_TOOLCHAIN_FILE:STRING=${VCPKG_ROOT}/scripts/buildsystems/vcpkg
     -H/workspace -B/workspace/build -G Ninja
 RUN cmake --build /workspace/build --config Debug --target all --
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 as sdk
+FROM mcr.microsoft.com/dotnet/sdk:9.0 as sdk
 WORKDIR /source
 
 ADD Managed /source
 RUN dotnet restore
 RUN dotnet publish --no-restore -o /app
 
-FROM mcr.microsoft.com/dotnet/runtime:8.0
+FROM mcr.microsoft.com/dotnet/runtime:9.0
 WORKDIR /app
 COPY --from=base /workspace/build/src/*.so .
 COPY --from=base /workspace/build/vcpkg_installed/x64-linux/debug/lib/*.so .
