@@ -10,7 +10,7 @@ public class Program
     static void Main(string[] args)
     {
         InitLogging();
-        LogManager.GetCurrentClassLogger().Info("Starting Cyberverse Server 0.0.1 (c) 2023 MeFisto94");
+        LogManager.GetCurrentClassLogger().Info("Starting Cyberverse Server 0.0.1 (c) 2023-2025 MeFisto94");
         var server = new GameServer(1337);
         AddTypicalPacketHandlers(server);
         

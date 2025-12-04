@@ -5,6 +5,7 @@ public class NativeGameServer
     private static bool _hadSuccessfulNativeInit = false;
     private readonly ushort _listeningPort;
     private readonly IntPtr _nativePtr;
+    private readonly Native.ConnectionStateChangedCallback _connectionStateChangedCallbackDelegate;
     
     public NativeGameServer(ushort listeningPort)
     {
@@ -20,7 +21,9 @@ public class NativeGameServer
 
         _listeningPort = listeningPort;
         _nativePtr = Native.server_create(listeningPort);
-        Native.server_set_connection_state_changed_cb(_nativePtr, OnConnectionStateChange);
+        // TODO: Apparently this is required to prevent the delegate from being GC'ed, so double check and ignore the warnings?
+        _connectionStateChangedCallbackDelegate = new Native.ConnectionStateChangedCallback(OnConnectionStateChange);
+        Native.server_set_connection_state_changed_cb(_nativePtr, _connectionStateChangedCallbackDelegate);
     }
 
     public virtual void Update(float deltaTime)
