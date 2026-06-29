@@ -81,7 +81,7 @@ consteval auto GetDefaultMaxValue()
 template<typename TSpec, typename TEnum>
 consteval auto GetMinValue()
 {
-    if constexpr (HasMinValueGetter<TSpec>)
+    if constexpr (HasMaxValueGetter<TSpec>)
     {
         return TSpec::Min();
     }
