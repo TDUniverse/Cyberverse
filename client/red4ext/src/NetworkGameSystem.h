@@ -1,6 +1,6 @@
 #ifndef NETWORKMANAGERCONTROLLER_H
 #define NETWORKMANAGERCONTROLLER_H
-#include "RED4ext/Api/Sdk.hpp"
+#include "RED4ext/Api/v1/Sdk.hpp"
 #include "RED4ext/SystemUpdate.hpp"
 
 #include "RED4ext/Scripting/IScriptable.hpp"
