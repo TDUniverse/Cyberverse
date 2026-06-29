@@ -81,7 +81,7 @@ consteval auto GetDefaultMaxValue()
 template<typename TSpec, typename TEnum>
 consteval auto GetMinValue()
 {
-    if constexpr (HasMaxValueGetter<TSpec>)
+    if constexpr (HasMinValueGetter<TSpec>)
     {
         return TSpec::Min();
     }
@@ -94,7 +94,7 @@ consteval auto GetMinValue()
 template<typename TSpec, typename TEnum>
 consteval auto GetMaxValue()
 {
-    if constexpr (HasMinValueGetter<TSpec>)
+    if constexpr (HasMaxValueGetter<TSpec>)
     {
         return TSpec::Max();
     }
@@ -673,7 +673,7 @@ class ClassDescriptorDefaultImpl : public ClassDescriptor<TClass>
         {
             if (!CClass::parent->flags.isAbstract)
             {
-                return CClass::parent->IsEqual(aLhs, aRhs);
+                return CClass::parent->IsEqual(aLhs, aRhs, a3);
             }
             return false;
         }
