@@ -9,6 +9,7 @@
 
 #include "PlayerActionTracker.h"
 #include "PlayerSync/InterpolationData.h"
+#include "Red/ClassDescriptorCompat.hpp"
 #include "RED4ext/Scripting/Natives/Generated/AI/Command.hpp"
 #include "RED4ext/Scripting/Natives/Generated/Vector4.hpp"
 #include "RED4ext/Scripting/Natives/entEntityID.hpp"
@@ -73,6 +74,14 @@ private:
     RTTI_IMPL_TYPEINFO(NetworkGameSystem);
     RTTI_IMPL_ALLOCATOR();
 };
+
+namespace Red
+{
+template<>
+class ClassDescriptorDefaultImpl<::NetworkGameSystem> : public CyberverseClassDescriptorDefaultImpl<::NetworkGameSystem>
+{
+};
+} // namespace Red
 
 RTTI_DEFINE_CLASS(NetworkGameSystem, {
     RTTI_METHOD(EnqueueLoadLastCheckpoint);
