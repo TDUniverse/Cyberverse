@@ -7,7 +7,7 @@
 #include "RED4ext/Scripting/Natives/Generated/ent/EntityID.hpp"
 #include "RED4ext/Scripting/Natives/Generated/game/Object.hpp"
 #include "RED4ext/Scripting/Natives/Generated/vehicle/BaseObject.hpp"
-#include "RedLib.hpp"
+#include <RedLib.hpp>
 
 namespace Cyberverse::Utils
 {
@@ -106,4 +106,3 @@ namespace Cyberverse::Utils
         return dbId;
     }
 }
-
