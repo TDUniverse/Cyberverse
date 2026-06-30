@@ -3,8 +3,6 @@
 #include <RED4ext/RED4ext.hpp>
 #include <RedLib.hpp>
 
-#include "Red/ClassDescriptorCompat.hpp"
-
 #include "RED4ext/CName.hpp"
 #include "RED4ext/Scripting/Natives/Generated/game/Object.hpp"
 #include "RED4ext/Scripting/Natives/Generated/game/events/HitEvent.hpp"
@@ -28,14 +26,6 @@ private:
     RTTI_IMPL_TYPEINFO(PlayerActionTracker);
     RTTI_IMPL_ALLOCATOR();
 };
-
-namespace Red
-{
-template<>
-class ClassDescriptorDefaultImpl<::PlayerActionTracker> : public CyberverseClassDescriptorDefaultImpl<::PlayerActionTracker>
-{
-};
-} // namespace Red
 
 RTTI_DEFINE_CLASS(PlayerActionTracker, {
     RTTI_METHOD(RecordPlayerAction);
