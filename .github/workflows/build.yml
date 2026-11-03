@@ -31,10 +31,18 @@ jobs:
 
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
+      # vcpkg removed the x-gha backend, so use a plain directory and cache it via actions/cache.
+      VCPKG_BINARY_SOURCES: 'clear;files,${{ github.workspace }}/.vcpkg-binary-cache,readwrite'
     steps:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
+      - name: Cache vcpkg binary packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.vcpkg-binary-cache
+          key: vcpkg-binary-${{ runner.os }}-${{ hashFiles('client/red4ext/vcpkg.json', '.github/workflows/build.yml') }}
+          restore-keys: vcpkg-binary-${{ runner.os }}-
       - uses: lukka/get-cmake@latest
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@main
