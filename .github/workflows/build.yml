@@ -22,9 +22,27 @@ jobs:
         context: server
         file: server/Dockerfile
         push: false
+        load: true # needed so the smoke test below can run the image
         tags: cyberverse-server:ci
         cache-from: type=gha
         cache-to: type=gha,mode=max
+    - name: Smoke test the server image
+      # The native library only prints this line after GameNetworkingSockets initialized and the socket is listening,
+      # so it also catches missing/unresolvable .so files, which a managed-only log line would not.
+      run: |
+        docker run -d --name cyberverse-server cyberverse-server:ci
+        for i in $(seq 1 30); do
+          logs=$(docker logs cyberverse-server 2>&1)
+          if grep -q 'Server listening on port 1337' <<< "$logs" && [ -n "$(docker ps -q -f name=cyberverse-server)" ]; then
+            echo "Server is up"
+            exit 0
+          fi
+          [ -z "$(docker ps -q -f name=cyberverse-server)" ] && break
+          sleep 1
+        done
+        echo "::error::Server did not start listening on port 1337" >&2
+        docker logs cyberverse-server
+        exit 1
 
   client:
     runs-on: windows-latest

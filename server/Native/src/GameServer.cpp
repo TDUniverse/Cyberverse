@@ -63,6 +63,7 @@ bool GameServer::ListenOn(const uint16_t nPort)
     }
 
     printf("Server listening on port %d\n", nPort);
+    fflush(stdout); // stdout is fully buffered when piped (Docker, CI), which would hide this line until exit
     return true;
 }
 
