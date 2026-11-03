@@ -81,7 +81,7 @@ jobs:
       - name: List $RUNNER_WORKSPACE after build
         run: find $RUNNER_WORKSPACE
         shell: bash
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: RED4ext Plugin
           path: client/red4ext/build/ninja-vcpkg/src/*.dll
