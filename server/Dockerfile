@@ -1,11 +1,14 @@
 FROM kuyoh/vcpkg:2025.10.17 AS base
 WORKDIR /workspace
 
+# Only the manifest first, so the slow vcpkg install stays cached until the dependencies change.
+ADD Native/vcpkg.json /workspace/vcpkg.json
+RUN vcpkg install --triplet=x64-linux
+
 ADD Native /workspace
 ADD protocol /workspace/protocol
 
 # generate and build
-RUN vcpkg install --triplet=x64-linux
 RUN sed -i 's\../../shared/protocol\protocol\g' /workspace/CMakeLists.txt
 # TODO: Use CMakePresets instead.
 RUN cmake -DCMAKE_TOOLCHAIN_FILE:STRING=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
