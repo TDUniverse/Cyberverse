@@ -1,4 +1,6 @@
-FROM kuyoh/vcpkg:2025.10.17 AS base
+# Name the OS explicitly (the plain date tags follow whichever Ubuntu kuyoh builds by default), and keep it on the same
+# release as the runtime stage below: the runtime's glibc has to be >= the one the natives were built with.
+FROM kuyoh/vcpkg:2025.10.17-ubuntu24.04 AS base
 WORKDIR /workspace
 
 # Only the manifest first, so the slow vcpkg install stays cached until the dependencies change.
@@ -16,14 +18,15 @@ RUN cmake -DCMAKE_TOOLCHAIN_FILE:STRING=${VCPKG_ROOT}/scripts/buildsystems/vcpkg
     -H/workspace -B/workspace/build -G Ninja
 RUN cmake --build /workspace/build --config Debug --target all --
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 as sdk
+FROM mcr.microsoft.com/dotnet/sdk:10.0 as sdk
 WORKDIR /source
 
 ADD Managed /source
 RUN dotnet restore
 RUN dotnet publish --no-restore -o /app
 
-FROM mcr.microsoft.com/dotnet/runtime:9.0
+# Ubuntu 24.04 (noble) to match the build stage; the default Debian 12 image has glibc 2.36, but the natives need 2.38+.
+FROM mcr.microsoft.com/dotnet/runtime:10.0-noble
 WORKDIR /app
 COPY --from=base /workspace/build/src/*.so .
 COPY --from=base /workspace/build/vcpkg_installed/x64-linux/debug/lib/*.so .
