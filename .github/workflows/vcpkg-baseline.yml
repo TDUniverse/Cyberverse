@@ -1,0 +1,31 @@
+name: vcpkg Baseline
+on:
+  push:
+    branches: [ "master", "feature/ci" ]
+    paths:
+      - 'client/red4ext/vcpkg.json'
+      - 'server/Native/vcpkg.json'
+      - '.github/workflows/vcpkg-baseline.yml'
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - 'client/red4ext/vcpkg.json'
+      - 'server/Native/vcpkg.json'
+      - '.github/workflows/vcpkg-baseline.yml'
+
+jobs:
+  vcpkg-baseline:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+    - name: Check that client and server pin the same vcpkg baseline
+      # The baseline decides the GameNetworkingSockets version, and both sides have to speak the same one.
+      run: |
+        client=$(jq -er '."builtin-baseline"' client/red4ext/vcpkg.json)
+        server=$(jq -er '."builtin-baseline"' server/Native/vcpkg.json)
+        if [ "$client" != "$server" ]; then
+          echo "::error::vcpkg builtin-baseline differs: client/red4ext/vcpkg.json has $client, server/Native/vcpkg.json has $server"
+          exit 1
+        fi
+        echo "Both manifests use vcpkg baseline $client"

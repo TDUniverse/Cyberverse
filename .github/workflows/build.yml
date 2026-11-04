@@ -66,9 +66,9 @@ jobs:
         uses: lukka/run-vcpkg@main
         id: runvcpkg
         with:
-          # The vcpkg.json file, which will be part of cache key computation.
+          # The vcpkg.json file, which will be part of cache key computation. Without a vcpkgGitCommitId, run-vcpkg also
+          # checks vcpkg out at this manifest's builtin-baseline.
           vcpkgJsonGlob: 'client/red4ext/vcpkg.json'
-          vcpkgGitCommitId: '271a5b8850aa50f9a40269cbf3cf414b36e333d6'
       - name: Generate build output folder
         run: mkdir '${{ github.workspace }}\client\red4ext\build\ninja-vcpkg'
       - name: Run CMake with vcpkg.json manifest

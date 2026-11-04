@@ -1,5 +1,7 @@
 # Name the OS explicitly (the plain date tags follow whichever Ubuntu kuyoh builds by default), and keep it on the same
 # release as the runtime stage below: the runtime's glibc has to be >= the one the natives were built with.
+# The image's vcpkg release must be at least as new as the builtin-baseline in Native/vcpkg.json, otherwise its version
+# database doesn't know the pinned ports and `vcpkg install` fails. Bump the tag when a baseline update needs it.
 FROM kuyoh/vcpkg:2025.10.17-ubuntu24.04 AS base
 WORKDIR /workspace
 

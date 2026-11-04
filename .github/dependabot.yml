@@ -4,3 +4,17 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+  # Bumps builtin-baseline, which also decides the vcpkg checkout in the client CI job. If the server's Docker build then
+  # fails, the kuyoh/vcpkg tag in server/Dockerfile is older than the new baseline and needs a bump in the same PR.
+  # Client and server must agree on the GameNetworkingSockets version, so both manifests move in one PR.
+  - package-ecosystem: "vcpkg"
+    directories:
+      - "/client/red4ext"
+      - "/server/Native"
+    schedule:
+      interval: "weekly"
+    groups:
+      vcpkg-baseline:
+        group-by: dependency-name
+        patterns:
+          - "*"
