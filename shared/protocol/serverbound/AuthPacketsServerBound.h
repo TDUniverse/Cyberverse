@@ -11,7 +11,7 @@
 // TODO: we need to find a solution for strings, as zpp::bits doesn't support char* and c# doesn't support std::string.
 // constant arrays are wasteful. So we add yet another type just for the C# ABI
 struct InitAuthServerBound {
-    std::string username; // TODO: Limit to 0xFF
+    std::string username; // UTF-8. TODO: Limit to 0xFF
     // TODO: proof
     uint32_t protocol_version;
 

@@ -21,6 +21,8 @@
 
 #include <zpp_bits.h>
 
+#include <lmcons.h> // UNLEN
+
 bool NetworkGameSystem::Load()
 {
     if (SteamDatagramErrMsg errMsg; !GameNetworkingSockets_Init(nullptr, errMsg))
@@ -129,14 +131,22 @@ void NetworkGameSystem::ConnectionStatusChangedCallback(SteamNetConnectionStatus
 
     if (pInfo->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected)
     {
-        char buf[255];
-        DWORD buf_len = 255;
-        GetUserNameA(buf, &buf_len);
+        // The protocol wants UTF-8, but GetUserNameA returns the system code page, so convert from the wide variant.
+        wchar_t wide_name[UNLEN + 1];
+        DWORD wide_len = UNLEN + 1; // In: buffer size, out: length including the null terminator
+        std::string username;
+        if (GetUserNameW(wide_name, &wide_len) && wide_len > 1)
+        {
+            const auto name_len = static_cast<int>(wide_len - 1);
+            username.resize(WideCharToMultiByte(CP_UTF8, 0, wide_name, name_len, nullptr, 0, nullptr, nullptr));
+            WideCharToMultiByte(CP_UTF8, 0, wide_name, name_len, username.data(), static_cast<int>(username.size()),
+                                nullptr, nullptr);
+        }
 
         SDK->logger->Info(PLUGIN, "Socket connected, authenticating");
         InitAuthServerBound auth_packet = {};
         auth_packet.protocol_version = PROTOCOL_VERSION_CURRENT;
-        auth_packet.username = buf;
+        auth_packet.username = username;
 
         // TODO: Maybe we could manage this singleton access better? But then, the Game's GameSystem Container is the owner of "this"
         Red::GetGameSystem<NetworkGameSystem>()->EnqueueMessage(0, auth_packet);

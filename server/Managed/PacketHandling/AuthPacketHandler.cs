@@ -10,17 +10,17 @@ namespace Cyberverse.Server.PacketHandling;
 public class AuthPacketHandler
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-    private readonly TypedPacketHandler<InitAuthServerbound> _initAuthHandler;
+    private readonly TypedPacketHandler<InitAuthServerBoundCSharp> _initAuthHandler;
     private PlayerService? _players = null;
 
     public AuthPacketHandler()
     {
-        _initAuthHandler = new TypedPacketHandler<InitAuthServerbound>(HandleInitAuth);
+        _initAuthHandler = new TypedPacketHandler<InitAuthServerBoundCSharp>(HandleInitAuth);
     }
 
-    protected virtual void HandleInitAuth(GameServer server, EMessageTypeServerbound messageType, byte channelId, uint connectionId, InitAuthServerbound content)
+    protected virtual void HandleInitAuth(GameServer server, EMessageTypeServerbound messageType, byte channelId, uint connectionId, InitAuthServerBoundCSharp content)
     {
-        Logger.Trace($"Connection request from {content.username}");
+        Logger.Trace($"Connection request from {content.Username}");
             
         AuthResultClientBound resultPacket = default;
         resultPacket.protocol_version = GameServer.PROTOCOL_VERSION_CURRENT;
@@ -35,7 +35,7 @@ public class AuthPacketHandler
             var validation = true;
             resultPacket.auth_result = validation ? EAuthResult.Ok : EAuthResult.ValidationFailed;
             // TODO: Check if there is an active player with that uuid already (that requires having non-username logins first, and also breaks my local dev for now!)
-            _players!.ConnectedPlayers.Add(connectionId, new Player { Name = content.username, ConnectionId = connectionId });
+            _players!.ConnectedPlayers.Add(connectionId, new Player { Name = content.Username, ConnectionId = connectionId });
         }
 
         Message outputMessage = default;
