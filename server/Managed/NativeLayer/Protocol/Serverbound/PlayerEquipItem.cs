@@ -7,6 +7,7 @@ public struct PlayerEquipItem
 {
     public ulong slot;
     public ulong itemId;
-    public bool isWeapon;
-    public bool isUnequipping; // TODO: For some reason this flag is always false. Is this a packing issue because the bools got bitpacked?
+    // C++ bools are 1 byte, but marshaling defaults to the 4 byte Win32 BOOL.
+    [MarshalAs(UnmanagedType.U1)] public bool isWeapon;
+    [MarshalAs(UnmanagedType.U1)] public bool isUnequipping;
 }
