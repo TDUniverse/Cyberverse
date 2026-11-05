@@ -20,7 +20,7 @@ RUN cmake -DCMAKE_TOOLCHAIN_FILE:STRING=${VCPKG_ROOT}/scripts/buildsystems/vcpkg
     -H/workspace -B/workspace/build -G Ninja
 RUN cmake --build /workspace/build --config Debug --target all --
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 as sdk
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS sdk
 WORKDIR /source
 
 ADD Managed /source
@@ -36,7 +36,7 @@ COPY --from=sdk /app .
 # TODO: When trying to resolve libGameNetworkingSockets, ldd uses system locations and libCyberM.Server.Native's RPATH (/workspace/build/vcpkg_installed/x64-linux/)
 # but the .so is actually in the PWD, so we set the LD_LIBRARY_PATH (that was previously empty) to that. We could/should migrate to CMAKE using the correct
 # linker flags to set RPATH to "." (who cares about /workspace/build), but that probably needs OS specific defines to only run on linux
-ENV LD_LIBRARY_PATH .
+ENV LD_LIBRARY_PATH=/app
 USER $APP_UID
 # TODO: Use a non-cringe port.
 EXPOSE 1337
