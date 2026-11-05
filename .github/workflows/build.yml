@@ -6,6 +6,24 @@ on:
     branches: [ "master" ]
 
 jobs:
+  server-tests:
+    # The layout tests compare the C# protocol structs with the C++ ones as clang lays them out on the runner's
+    # platform, so run them on both platforms the server runs on. Both runner images ship clang.
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v5
+    - name: Check out zpp_bits for the layout tests
+      run: git submodule update --init --depth 1 server/Native/deps/zpp_bits
+    - uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: '10.0.x'
+    - name: Run the server tests
+      run: dotnet test server/Managed.Tests
+
   docker-server:
     runs-on: ubuntu-latest
 
