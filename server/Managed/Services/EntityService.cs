@@ -1,4 +1,5 @@
-﻿using Cyberverse.Server.Types;
+﻿using Cyberverse.Server.TweakDb;
+using Cyberverse.Server.Types;
 
 namespace Cyberverse.Server.Services;
 
@@ -14,7 +15,7 @@ public class EntityService
     public readonly Dictionary<ulong, Entity> SpawnedEntities = new();
     private ulong _entityIdCounter = 0u;
     
-    public Entity CreateEntity(ulong recordId)
+    public Entity CreateEntity(TweakDbId recordId)
     {
         var entity = new Entity(_entityIdCounter++, recordId);
         SpawnedEntities.Add(entity.NetworkedEntityId, entity);

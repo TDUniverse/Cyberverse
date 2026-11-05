@@ -1,5 +1,6 @@
 ﻿using Cyberverse.Server.NativeLayer.Protocol.Serverbound;
 using Cyberverse.Server.Services;
+using Cyberverse.Server.TweakDb.Generated;
 using Cyberverse.Server.Types;
 using NLog;
 
@@ -9,10 +10,10 @@ public class PlayerPacketHandler
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private static readonly Random Random = new();
-    private static readonly string[] PossiblePlayerNpcChoice = ["Character.Judy", "Character.Panam", "Character.Alt", 
-        "Character.Clair", "Character.Dexter", "Character.Evelyn", "Character.Hanako", "Character.Jackie", 
-        "Character.Mama_Welles", "Character.Misty", "Character.Stout", "Character.Takemura", "Character.Tbug",
-        "Character.wakako_okada", "Character.Yorinobu"];
+    private static readonly Character[] PossiblePlayerNpcChoice = [Character.Judy, Character.Panam, Character.Alt,
+        Character.Claire, Character.Dexter, Character.Evelyn, Character.Hanako, Character.Jackie,
+        Character.Mama_Welles, Character.Misty, Character.Stout, Character.Takemura, Character.Tbug,
+        Character.wakako_okada, Character.Yorinobu];
     
     private readonly TypedPacketHandler<PlayerJoinWorld> _playerJoinHandler;
     private readonly TypedPacketHandler<PlayerPositionUpdate> _playerMoveHandler;
